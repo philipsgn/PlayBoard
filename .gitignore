@@ -35,3 +35,5 @@ app_ui_docs/
 .agents/*
 !.agents/rules/
 *.tsbuildinfo
+
+scratch/

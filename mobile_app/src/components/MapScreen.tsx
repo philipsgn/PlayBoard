@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   MAP_1_NODES,
   type MapNodeConfig,
-  type PlayerMapProgress,
-  loadMapProgress,
 } from '../game/map-progress';
 import { MapTopHud } from './MapTopHud';
 import { MapBottomDock } from './MapBottomDock';
@@ -12,6 +10,7 @@ import { UnifiedManagementSheet } from './UnifiedManagementSheet';
 import type { GameState } from '../../../src/game/types';
 import { createMvpMobileGame } from '../game/session';
 import { loadGameLocally } from '../../../src/game/saved-game';
+import { loadMasterProfile } from '../../../src/game/master-session';
 import { sound } from '../utils/audio';
 import { assetUrl } from '../utils/assets';
 
@@ -37,7 +36,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({
   onOpenRules,
 }) => {
   const [activeGame] = useState<GameState>(() => game || loadGameLocally() || createMvpMobileGame());
-  const [progress] = useState<PlayerMapProgress>(() => loadMapProgress());
   const [showInventory, setShowInventory] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -68,8 +66,16 @@ export const MapScreen: React.FC<MapScreenProps> = ({
   };
 
   const getNodeStatus = (node: MapNodeConfig): 'completed' | 'active' | 'locked' => {
-    // Chỉ duy nhất Chương 1 (Node 1 / id: '1.1') là mở khóa để chơi (gồm 4 vòng). Các Chương 2-5 đang cập nhật.
-    if (node.id === progress.activeNodeId || node.stageNumber === 1) return 'active';
+    const profile = loadMasterProfile();
+    if (node.stageNumber === 1) {
+      return profile.unlockedChapters.chapter2 ? 'completed' : 'active';
+    }
+    if (node.stageNumber === 2) {
+      return profile.unlockedChapters.chapter2 ? 'active' : 'locked';
+    }
+    if (node.stageNumber === 3) {
+      return profile.unlockedChapters.chapter3 ? 'active' : 'locked';
+    }
     return 'locked';
   };
 
@@ -78,7 +84,13 @@ export const MapScreen: React.FC<MapScreenProps> = ({
     const status = getNodeStatus(node);
     sound.playClick();
     if (status === 'locked') {
-      showToast(`Chương ${node.stageNumber}: Đang cập nhật!`);
+      if (node.stageNumber === 2) {
+        showToast('Cần tích lũy ≥ 90M VND ở Chương 1 để mở khóa Chương 2!');
+      } else if (node.stageNumber === 3) {
+        showToast('Cần đạt điểm hòa vốn ở Chương 2 để mở khóa Chương 3!');
+      } else {
+        showToast(`Chương ${node.stageNumber}: Đang phát triển!`);
+      }
       return;
     }
     // Chạm Node mở là vào thẳng game loop, không qua popup trung gian

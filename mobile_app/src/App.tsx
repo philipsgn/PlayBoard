@@ -32,6 +32,8 @@ import { SettingsModal } from './components/SettingsModal'
 import { hasSeenTutorial } from './game/onboarding'
 import { MapScreen } from './components/MapScreen'
 import type { MapNodeConfig } from './game/map-progress'
+import { CoffeeShopView } from './components/CoffeeShopView'
+import { loadMasterProfile, recordChapter1Victory } from '../../src/game/master-session'
 
 // Coordinates are artwork metadata; category/order/labels come from the official C20 or B18 board.
 const coordinatesFor = (board: ReturnType<typeof boardFor>) => {
@@ -66,6 +68,16 @@ export function GameExperience({ session, onRestart, onHome, onHelp, helpOpen = 
   const nextActionAt = useRef(0)
   const isDangerZone = game.portfolio.cash < 5_000_000 && game.phase !== 'finished'
   const prevCash = useRef(game.portfolio.cash)
+
+  useEffect(() => {
+    if (game.phase === 'finished') {
+      const goal = goalProgress(game)
+      if (goal.funds >= 90_000_000) {
+        const grade = goal.funds >= 120_000_000 ? 'S' : goal.funds >= 105_000_000 ? 'A' : 'B'
+        recordChapter1Victory(loadMasterProfile(), goal.funds, grade)
+      }
+    }
+  }, [game.phase])
 
   useEffect(() => {
     if (isDangerZone && prevCash.current >= 5_000_000) {
@@ -320,7 +332,7 @@ export function GameExperience({ session, onRestart, onHome, onHelp, helpOpen = 
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<'entrance' | 'map' | 'game' | 'setup'>('entrance')
+  const [screen, setScreen] = useState<'entrance' | 'map' | 'game' | 'setup' | 'chapter2'>('entrance')
   const [session, setSession] = useState<Session | null>(null)
   const [saved, setSaved] = useState(() => loadGameLocally())
   const [saveNotice, setSaveNotice] = useState('')
@@ -363,9 +375,13 @@ export default function App() {
   const [guideHelpOpen, setGuideHelpOpen] = useState(false)
   const openHelp = () => setGuideHelpOpen(true)
 
-  // Chạm Node trên Bản Đồ (Chương 1)
+  // Chạm Node trên Bản Đồ (Chương 1 hoặc Chương 2)
   const handlePlayNode = (node: MapNodeConfig) => {
     sound.playClick()
+    if (node.stageNumber === 2 || node.chapterId === 2) {
+      setScreen('chapter2')
+      return
+    }
     void node.id
     if (saved && saved.phase !== 'finished') {
       setSession(createMobileSession(saved))
@@ -422,6 +438,13 @@ export default function App() {
           ) : (
             <div style={{ display: 'none' }} aria-hidden="true" id="initial-savings" />
           )}
+        </MobileContainer>
+      ) : screen === 'chapter2' ? (
+        <MobileContainer>
+          <CoffeeShopView
+            onBackToMap={() => setScreen('map')}
+            onOpenHelp={openHelp}
+          />
         </MobileContainer>
       ) : screen === 'map' ? (
         <MobileContainer>
