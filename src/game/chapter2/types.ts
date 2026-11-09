@@ -49,6 +49,24 @@ export interface DecisionCard {
   options: DecisionOption[];
 }
 
+export interface CrisisOption {
+  id: 'A' | 'B' | 'C';
+  label: string;
+  cashImpactImmediate: number;   // Tiền mặt chi trả hoặc thu về ngay (VND)
+  dailyCupsDelta: number;        // Tác động lên số ly bán ra mỗi ngày
+  satisfactionDelta: number;     // Tác động lên độ hài lòng khách hàng (-100..+100)
+  takeawayLesson: string;        // Bài học tài chính/vận hành thực tế
+}
+
+export interface CoffeeCrisisEvent {
+  id: string;
+  monthTarget?: 1 | 2 | 3;
+  title: string;
+  context: string;
+  urgencyLevel: 'high' | 'critical' | 'opportunity';
+  options: CrisisOption[];
+}
+
 export interface CoffeeShopOutcome {
   victory: boolean;
   reason: string;
@@ -75,7 +93,13 @@ export interface CoffeeShopState {
   currentCardIndex: number;      // 0..3: Vị trí thẻ quyết định trong tháng hiện tại
   monthlyPnL: MonthlyPnLStatement[];
   
+  // Biến cố bất ngờ & Mini-game Giờ Cao Điểm
+  activeCrisis?: CoffeeCrisisEvent | null;
+  resolvedCrisisIds: string[];
+  baristaRushCompleted?: boolean;
+  lastRushTip?: number;
+  
   // Trạng thái vòng đời tháng
-  phase: 'briefing' | 'decisions' | 'monthly_settlement' | 'chapter_result';
+  phase: 'briefing' | 'decisions' | 'crisis' | 'barista_rush' | 'monthly_settlement' | 'chapter_result';
   outcome?: CoffeeShopOutcome;
 }

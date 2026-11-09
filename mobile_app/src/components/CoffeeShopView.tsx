@@ -4,6 +4,10 @@ import {
   getCurrentCard,
   applyDecision,
   executeMonthlySettlement,
+  triggerCrisis,
+  resolveCrisis,
+  startBaristaRush,
+  applyBaristaRushResult,
 } from '../../../src/game/chapter2/engine.ts';
 import type { CoffeeShopState } from '../../../src/game/chapter2/types.ts';
 import { calculateCashRunway } from '../../../src/game/chapter2/pnl.ts';
@@ -12,6 +16,8 @@ import { money } from '../../../src/game/format.ts';
 import { sound } from '../utils/audio.ts';
 import { CoffeeDecisionCard } from './CoffeeDecisionCard.tsx';
 import { CoffeeReceiptModal } from './CoffeeReceiptModal.tsx';
+import { CoffeeCrisisModal } from './CoffeeCrisisModal.tsx';
+import { BaristaRushMiniGame } from './BaristaRushMiniGame.tsx';
 
 interface CoffeeShopViewProps {
   onBackToMap: () => void;
@@ -32,7 +38,33 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
   );
 
   const handleApplyOption = (optionId: 'A' | 'B' | 'C') => {
-    setGame((prev) => applyDecision(prev, optionId));
+    setGame((prev) => {
+      const next = applyDecision(prev, optionId);
+      // Sau khi hoàn thành quyết định thứ 2 của mỗi tháng, kích hoạt Thẻ Biến Cố Khủng Hoảng
+      if (next.currentCardIndex === 2) {
+        const crisisNext = triggerCrisis(next);
+        if (crisisNext.phase === 'crisis') {
+          return crisisNext;
+        }
+      }
+      // Khi đã giải quyết xong 4 thẻ quyết định ở Tháng 1 hoặc Tháng 2, chuyển sang Barista Rush
+      if (
+        next.phase === 'monthly_settlement' &&
+        !next.baristaRushCompleted &&
+        (next.month === 1 || next.month === 2)
+      ) {
+        return startBaristaRush(next);
+      }
+      return next;
+    });
+  };
+
+  const handleResolveCrisis = (optionId: 'A' | 'B' | 'C') => {
+    setGame((prev) => resolveCrisis(prev, optionId));
+  };
+
+  const handleBaristaRushComplete = (score: 0 | 1 | 2 | 3) => {
+    setGame((prev) => applyBaristaRushResult(prev, score));
   };
 
   const handleContinueSettlement = () => {
@@ -266,6 +298,22 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
             order={game.currentCardIndex + 1}
             cash={game.cash}
             onSelectOption={handleApplyOption}
+          />
+        )}
+
+        {/* Phase 1.5: Thẻ Biến Cố Khủng Hoảng Bất Ngờ (Crisis Modal) */}
+        {game.phase === 'crisis' && game.activeCrisis && (
+          <CoffeeCrisisModal
+            crisis={game.activeCrisis}
+            onSelectOption={handleResolveCrisis}
+          />
+        )}
+
+        {/* Phase 1.8: Mini-game Giờ Cao Điểm 8h Sáng (Barista Rush) */}
+        {game.phase === 'barista_rush' && (
+          <BaristaRushMiniGame
+            month={game.month}
+            onComplete={handleBaristaRushComplete}
           />
         )}
 

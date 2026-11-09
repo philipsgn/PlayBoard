@@ -3,6 +3,7 @@
 
 import type { CoffeeShopState, DecisionCard, CoffeeShopOutcome } from './types.ts';
 import { CHAPTER2_DECISION_CARDS } from './cards.ts';
+import { CHAPTER2_CRISIS_EVENTS, getCrisisForMonth } from './crises.ts';
 import { generateMonthlyPnL, calculateCashRunway } from './pnl.ts';
 
 export const DEFAULT_CAPITAL_CH2 = 90_000_000;
@@ -39,6 +40,9 @@ export function createCoffeeShopGame(
     activeDecisions: [],
     currentCardIndex: 0,
     monthlyPnL: [],
+    activeCrisis: null,
+    resolvedCrisisIds: [],
+    baristaRushCompleted: false,
     phase: 'decisions',
   };
 }
@@ -134,6 +138,110 @@ export function applyDecision(
     activeDecisions: nextActiveDecisions,
     currentCardIndex: nextCardIndex,
     phase: nextPhase,
+  };
+}
+
+/**
+ * Kích hoạt Thẻ Biến Cố Khủng Hoảng theo tháng (Immutable Reducer).
+ */
+export function triggerCrisis(
+  state: CoffeeShopState,
+  crisisId?: string
+): CoffeeShopState {
+  if (state.phase !== 'decisions') return state;
+  const crisis = crisisId
+    ? CHAPTER2_CRISIS_EVENTS.find((c) => c.id === crisisId)
+    : getCrisisForMonth(state.month, state.resolvedCrisisIds);
+
+  if (!crisis) return state;
+
+  return {
+    ...state,
+    activeCrisis: crisis,
+    phase: 'crisis',
+  };
+}
+
+/**
+ * Giải quyết Thẻ Biến Cố Khủng Hoảng bằng lựa chọn A, B hoặc C.
+ */
+export function resolveCrisis(
+  state: CoffeeShopState,
+  optionId: 'A' | 'B' | 'C'
+): CoffeeShopState {
+  if (state.phase !== 'crisis' || !state.activeCrisis) return state;
+
+  const option = state.activeCrisis.options.find((o) => o.id === optionId);
+  if (!option) return state;
+
+  const nextCash = state.cash + option.cashImpactImmediate;
+  const nextDailyCups = Math.max(5, state.dailyCupsSold + option.dailyCupsDelta);
+  const nextSatisfaction = Math.max(
+    0,
+    Math.min(100, state.customerSatisfaction + option.satisfactionDelta)
+  );
+
+  const nextResolved = [...state.resolvedCrisisIds, state.activeCrisis.id];
+
+  // Trở lại phase decisions hoặc monthly_settlement nếu đã hết thẻ
+  const nextPhase = state.currentCardIndex >= 4 ? 'monthly_settlement' : 'decisions';
+
+  return {
+    ...state,
+    cash: nextCash,
+    dailyCupsSold: nextDailyCups,
+    customerSatisfaction: nextSatisfaction,
+    resolvedCrisisIds: nextResolved,
+    activeCrisis: null,
+    phase: nextPhase,
+  };
+}
+
+/**
+ * Bắt đầu Mini-game Giờ Cao Điểm (Barista Rush Hour).
+ */
+export function startBaristaRush(state: CoffeeShopState): CoffeeShopState {
+  if (state.phase !== 'monthly_settlement' || state.baristaRushCompleted) return state;
+  return {
+    ...state,
+    phase: 'barista_rush',
+  };
+}
+
+/**
+ * Áp dụng kết quả Mini-game Giờ Cao Điểm.
+ * @param score Điểm số hoàn thành: 3 (Perfect), 2 (Good), 1 (Pass), 0 (Fail)
+ */
+export function applyBaristaRushResult(
+  state: CoffeeShopState,
+  score: 0 | 1 | 2 | 3
+): CoffeeShopState {
+  if (state.phase !== 'barista_rush') return state;
+
+  let tip = 0;
+  let cupsDelta = 0;
+
+  if (score === 3) {
+    tip = 1_500_000;
+    cupsDelta = 15;
+  } else if (score === 2) {
+    tip = 800_000;
+    cupsDelta = 8;
+  } else if (score === 1) {
+    tip = 300_000;
+    cupsDelta = 0;
+  }
+
+  const nextCash = state.cash + tip;
+  const nextDailyCups = Math.max(5, state.dailyCupsSold + cupsDelta);
+
+  return {
+    ...state,
+    cash: nextCash,
+    dailyCupsSold: nextDailyCups,
+    lastRushTip: tip,
+    baristaRushCompleted: true,
+    phase: 'monthly_settlement',
   };
 }
 
@@ -243,6 +351,7 @@ export function executeMonthlySettlement(state: CoffeeShopState): CoffeeShopStat
     cash: endingCash,
     currentCardIndex: 0,
     monthlyPnL: updatedMonthlyPnL,
+    baristaRushCompleted: false,
     phase: 'decisions',
   };
 }
