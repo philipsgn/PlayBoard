@@ -113,3 +113,19 @@ $$\text{Tiền mặt sau giao dịch} = \text{Tiền mặt hiện tại} - \text
 4. **Kiểm Soát Rủi Ro (25 điểm):** Không có nợ xấu lãi cao (10%/vòng) và không kẹt vốn tiệm kinh doanh.
 
 **Xếp hạng:** Hạng `S` ($\ge 90$ + Thắng), `A` ($\ge 80$), `B` ($\ge 70$), `C` ($\ge 60$), `D` ($< 60$).
+
+---
+
+## 5. HỆ THỐNG KỊCH TÍNH & ĐỒ HỌA TRENDING 2027 (VISUAL & HAPTIC DRAMA)
+
+### 5.1. Báo Động Vùng Nguy Cấp (Danger Zone Heartbeat FX)
+- **Đèn viền nhịp tim thở đỏ (`.danger-zone-vignette`):** Kích hoạt bao bọc màn hình 1080 × 2400 px khi Tiền mặt $< 5.000.000\text{ VND}$, tạo cảm giác căng thẳng nghẹt thở khi người chơi mạo hiểm tiêu cạn đệm an toàn.
+- **Âm thanh nhịp tim dồn dập (Heartbeat Tension):** Âm thanh tổng hợp Web Audio API thuần (tần số thấp 35–80 Hz) phát tiếng đập "thump... lub-dub" kết hợp rung phản hồi haptic `[35, 60, 45]ms` trên điện thoại.
+- **HUD Danger Pulse:** Capsule Tiền mặt trên Top HUD tự động chuyển sang chế độ thở viền đỏ neon kèm nhãn `⚠️ ĐỆM NGUY CẤP`.
+
+### 5.2. Thẻ Holographic Cyber-Retro 2027
+- **Foil Shift & Shimmer Sweep (`.holo-card-2027`):** Toàn bộ các hộp thoại giao dịch (Cổ phiếu, Vàng, Trái phiếu, Tiết kiệm, Tiệm F&B, Sự kiện Vĩ mô) được phủ viền ánh kim 6 màu chuyển động liên tục kết hợp dải sáng lướt phản quang góc $25^\circ$.
+- **Huy hiệu Neon 2027 (`.holo-trend-badge`):** Đính kèm huy hiệu `✨ 2027` định danh xu hướng trên góc các thẻ quyết định.
+
+### 5.3. Thước Đo Tiến Độ Đích 90M & Dự Phóng Sprint
+- Từ Vòng 2 trở đi, Top HUD tự động hiển thị thẻ **Dự phóng tài sản khi hoàn thành Vòng 4** (ví dụ: `[Dự phóng 96M]` hoặc `[✨ ĐẠT]`), giúp người chơi luôn nhìn thấy con đường về đích 90M và đưa ra quyết định chốt lời chính xác.

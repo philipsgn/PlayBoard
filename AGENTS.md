@@ -89,13 +89,13 @@ Mọi Tác nhân AI khi tham gia phát triển dự án PlayBoard phải xác đ
 
 | Hạng mục hệ thống | Trạng thái hiện tại | Chi tiết kỹ thuật & Chỉ số thực tế |
 | :--- | :---: | :--- |
-| **Commit mới nhất (Remote)** | `716c0e0` | Đã push đồng thời lên cả `codex/b18-compact-financial-ui` và `main` |
-| **Tổng số Unit Tests** | `360 / 360 PASS` | 100% pass, thời gian chạy ~24s (`npm test`) |
+| **Commit mới nhất (Remote)** | `9d5b4cb` | Đã push đồng thời lên cả `codex/b18-compact-financial-ui` và `main` |
+| **Tổng số Unit Tests** | `370 / 370 PASS` | 100% pass (Ch1 360 tests + MasterSession 4 tests + Ch2 Engine 6 tests) |
 | **Kiểm tra UI Mobile** | `8 / 8 PASS` | `scripts/diagnostics/mobile-final-ui.test.ts` pass hoàn toàn |
 | **Web Production Build** | `THÀNH CÔNG` | `npm run build` hoàn tất không cảnh báo lỗi |
 | **Mobile Production Build** | `THÀNH CÔNG` | `npm --prefix mobile_app run build` hoàn tất không lỗi |
 | **Chương 1 (B18 Cờ Tỷ Phú)** | `HOÀN THIỆN 100%` | 4 Quý 2026, Vàng bứt phá, đệm tiền 10M, Báo cáo sức khỏe, Danger Zone Heartbeat FX, Holographic 2027 Modals |
-| **Chương 2 (Khởi Nghiệp Cafe)**| `THIẾT KẾ ĐẦY ĐỦ` | GDD chi tiết, 12 thẻ quyết định, Sổ tay P&L, Design System gỗ retro, Tech Architecture |
+| **Chương 2 (Khởi Nghiệp Cafe)**| `ENGINE HOÀN THIỆN` | MasterSessionManager, 12 Thẻ quyết định, P&L hàng tháng, Break-even, Runway, 6/6 tests pass |
 | **Chương 3 (Nhân Chuỗi & Vốn)**| `THIẾT KẾ ĐẦY ĐỦ` | GDD chuỗi & Franchise, Bếp trung tâm, Định giá Cap Table, Sổ tay, Design System |
 | **Hệ thống Tài liệu Kiến trúc** | `HOÀN TẤT` | `SYSTEM_ARCHITECTURE.md`, `AGENTS_SOP.md`, 13 file tại `docs/chapters/` |
 

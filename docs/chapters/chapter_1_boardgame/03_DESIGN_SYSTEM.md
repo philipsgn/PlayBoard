@@ -66,3 +66,13 @@ Tích hợp trên tất cả các Modal giao dịch (Cổ phiếu, Vàng, Tiết
 - Đường kính: `108 px`.
 - Vị trí: Neo vững chắc ở góc dưới bên phải hoặc chính giữa phía dưới bàn cờ.
 - Hiệu ứng: Glow phát sáng dạng sóng xung kích (Pulse Ring Animation) khi đến lượt đi; nhún `scale(0.92)` khi người chơi chạm ngón tay.
+
+### 4.4. Đèn Viền Nhịp Tim Thở Đỏ (Danger Zone Vignette)
+- Lớp phủ: `.danger-zone-vignette` với `position: absolute; inset: 0; pointer-events: none; z-index: 28;`.
+- Hoạt ảnh: `dangerVignetteBreath 1.3s infinite ease-in-out` tạo nhịp thở đỏ tỏa bóng vào tâm màn hình (`box-shadow: inset 0 0 32px 10px rgba(239, 68, 68, 0.42)`).
+
+### 4.5. Thẻ Holographic Cyber-Retro 2027 (`.holo-card-2027`)
+- Khung nền: Glassmorphism tối sâu `linear-gradient(145deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.96) 50%, rgba(15, 23, 42, 0.98) 100%)`.
+- Viền đổi màu: Rainbow Foil Gradient Shift 6s đa sắc (`#ec4899`, `#8b5cf6`, `#3b82f6`, `#10b981`, `#f59e0b`).
+- Dải sáng quét: Shimmer Sweep nghiêng $25^\circ$ chu kỳ 5s phản chiếu bề mặt holographic.
+- Huy hiệu: `.holo-trend-badge` phát quang neon `✨ 2027` trên đỉnh các thẻ quyết định.
