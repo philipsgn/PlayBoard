@@ -1,0 +1,66 @@
+schema_version: 1
+project_id: "playboard"
+status: approved
+platform:
+  target: mobile
+  orientation: portrait
+  aspect_ratio: "9:20"
+  reference_size: [1080, 2400]
+  safe_area:
+    top: 56
+    right: 28
+    bottom: 96
+    left: 28
+visual:
+  theme: "Playful Gamification Fantasy"
+  keywords: ["financial-board", "coffee-shop-tycoon", "tactile-buttons", "gold-amber-theme", "fredoka"]
+  mood: "Lively, Friendly, Rewarding, Educating"
+  complexity: medium
+  materials: ["golden-wood", "glossy-amber", "frosted-glass", "warm-paper"]
+  lighting:
+    direction: top-left
+    softness: soft
+colors:
+  primary: "#D97706"
+  secondary: "#059669"
+  accent: "#7E22CE"
+  background: "#FFFDF5"
+  warning: "#EA580C"
+  reward: "#10B981"
+  disabled: "#CBD5E1"
+typography:
+  language: vi-VN
+  font_family: "Fredoka, sans-serif"
+  title: {size: 40, weight: 900}
+  section: {size: 28, weight: 800}
+  body: {size: 22, weight: 600}
+  number: {size: 32, weight: 900}
+  button: {size: 26, weight: 800}
+geometry:
+  radius: {small: 10, card: 18, modal: 24, pill: 999}
+  stroke: {thin: 1.5, regular: 2, strong: 3}
+  button_height: {small: 44, primary: 58}
+  icon_size: {utility: 48, navigation: 40, currency: 24}
+effects:
+  shadow: "0 4px 14px rgba(217, 119, 6, 0.35)"
+  highlight: "inset 0 1px 2px rgba(255, 255, 255, 0.7)"
+  selected: "0 0 0 2px #D97706, 0 4px 12px rgba(217, 119, 6, 0.4)"
+  disabled: "opacity 0.6, grayscale 20%"
+tokens:
+  color:
+    action-primary: "linear-gradient(180deg, #FCD34D 0%, #F59E0B 45%, #D97706 100%)"
+    action-success: "linear-gradient(180deg, #34D399 0%, #059669 100%)"
+    action-danger: "linear-gradient(180deg, #F87171 0%, #DC2626 100%)"
+    surface-panel: "rgba(255, 253, 245, 0.96)"
+    text-primary: "#381F0B"
+    text-muted: "#64748B"
+  spacing:
+    xs: 4
+    sm: 8
+    md: 14
+    lg: 20
+    xl: 28
+  motion:
+    fast-ms: 120
+    normal-ms: 220
+    slow-ms: 400

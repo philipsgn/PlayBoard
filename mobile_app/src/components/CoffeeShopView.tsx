@@ -18,7 +18,7 @@ import { CoffeeDecisionCard } from './CoffeeDecisionCard.tsx';
 import { CoffeeReceiptModal } from './CoffeeReceiptModal.tsx';
 import { CoffeeCrisisModal } from './CoffeeCrisisModal.tsx';
 import { BaristaRushMiniGame } from './BaristaRushMiniGame.tsx';
-import { ChibiCustomerBar, CustomerEmotion } from './ChibiCustomerBar.tsx';
+import { CoffeeShop3DView, Barista3DAction, Customer3DAction } from './CoffeeShop3DView.tsx';
 
 interface CoffeeShopViewProps {
   onBackToMap: () => void;
@@ -38,7 +38,8 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
     createCoffeeShopGame(initialCapital, bonusRunway)
   );
 
-  const [customerEmotion, setCustomerEmotion] = useState<CustomerEmotion>('idle');
+  const [barista3DAction, setBarista3DAction] = useState<Barista3DAction>('idle');
+  const [customer3DAction, setCustomer3DAction] = useState<Customer3DAction>('waiting');
   const [particleText, setParticleText] = useState<{ id: number; text: string; color: string } | null>(null);
 
   const triggerParticle = (text: string, color: string = '#34D399') => {
@@ -58,16 +59,21 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
         triggerParticle(`+${cupsDelta} Ly/ngày ☕`, '#38BDF8');
       }
 
-      if (next.customerSatisfaction > prev.customerSatisfaction) {
-        setCustomerEmotion('happy');
-        setTimeout(() => setCustomerEmotion('idle'), 2500);
-      }
+      // Kích hoạt Barista 3D action pha chế & Khách hàng phản hồi
+      setBarista3DAction('brewing');
+      const isHappy = next.customerSatisfaction >= prev.customerSatisfaction;
+      setCustomer3DAction(isHappy ? 'delighted' : 'waiting');
+
+      setTimeout(() => {
+        setBarista3DAction('idle');
+        setCustomer3DAction('waiting');
+      }, 2800);
 
       // Sau khi hoàn thành quyết định thứ 2 của mỗi tháng, kích hoạt Thẻ Biến Cố Khủng Hoảng
       if (next.currentCardIndex === 2) {
         const crisisNext = triggerCrisis(next);
         if (crisisNext.phase === 'crisis') {
-          setCustomerEmotion('anxious');
+          setCustomer3DAction('anxious');
           return crisisNext;
         }
       }
@@ -86,8 +92,13 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
   const handleResolveCrisis = (optionId: 'A' | 'B' | 'C') => {
     setGame((prev) => {
       const next = resolveCrisis(prev, optionId);
-      setCustomerEmotion(next.customerSatisfaction >= prev.customerSatisfaction ? 'happy' : 'idle');
-      setTimeout(() => setCustomerEmotion('idle'), 2500);
+      const isHappy = next.customerSatisfaction >= prev.customerSatisfaction;
+      setCustomer3DAction(isHappy ? 'delighted' : 'waiting');
+      if (isHappy) setBarista3DAction('celebrate');
+      setTimeout(() => {
+        setCustomer3DAction('waiting');
+        setBarista3DAction('idle');
+      }, 2800);
       return next;
     });
   };
@@ -96,9 +107,13 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
     setGame((prev) => {
       const next = applyBaristaRushResult(prev, score);
       if (score >= 2) {
-        setCustomerEmotion('happy');
+        setCustomer3DAction('delighted');
+        setBarista3DAction('celebrate');
         triggerParticle(`+${money(next.lastRushTip || 0)} Tip! 🪙`, '#FCD34D');
-        setTimeout(() => setCustomerEmotion('idle'), 3000);
+        setTimeout(() => {
+          setCustomer3DAction('waiting');
+          setBarista3DAction('idle');
+        }, 3200);
       }
       return next;
     });
@@ -308,11 +323,32 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
         </div>
       </header>
 
-      {/* 2. MAIN INTERACTIVE VIEWPORT */}
+      {/* 2. THREE.JS 3D VIEWPORT: Quán Cà Phê 3D Isometric & Barista / Khách Hàng Chibi */}
+      {game.phase !== 'chapter_result' && (
+        <section
+          style={{
+            width: '100%',
+            height: '280px',
+            minHeight: '250px',
+            maxHeight: '320px',
+            flexShrink: 0,
+            position: 'relative',
+          }}
+        >
+          <CoffeeShop3DView
+            baristaAction={barista3DAction}
+            customerAction={game.phase === 'crisis' ? 'anxious' : customer3DAction}
+            isCrisis={game.phase === 'crisis'}
+          />
+        </section>
+      )}
+
+      {/* 3. MAIN INTERACTIVE VIEWPORT (NỬA DƯỚI TƯƠNG TÁC) */}
       <main
         style={{
           flex: 1,
-          padding: '12px 12px 24px 12px',
+          width: '100%',
+          padding: '10px 12px 20px 12px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -328,7 +364,7 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
             className="particle-float-text"
             style={{
               position: 'absolute',
-              top: '80px',
+              top: '10px',
               left: '50%',
               transform: 'translateX(-50%)',
               fontSize: '18px',
@@ -341,16 +377,6 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
           >
             {particleText.text}
           </div>
-        )}
-
-        {/* Cozy Tycoon Animated Coffee Bar & Chibi Customer */}
-        {game.phase !== 'chapter_result' && (
-          <ChibiCustomerBar
-            emotion={customerEmotion}
-            satisfaction={game.customerSatisfaction}
-            tipAccumulated={game.lastRushTip || 0}
-            dailyCups={game.dailyCupsSold}
-          />
         )}
 
         {/* Phase 1: Thẻ Quyết Định Tình Huống (Polaroid 3D Tilt) */}
