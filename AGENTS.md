@@ -85,17 +85,17 @@ Mọi Tác nhân AI khi tham gia phát triển dự án PlayBoard phải xác đ
 
 ## 6. BẢNG TIẾN ĐỘ & TRẠNG THÁI HỆ THỐNG THỰC TẾ (LIVING DASHBOARD)
 
-> **Cập nhật lần cuối:** 09/11/2026 · **Kiểm duyệt:** Senior Game Manager Creator 2026
+> **Cập nhật lần cuối:** 10/11/2026 · **Kiểm duyệt:** Senior Game Manager Creator 2026
 
 | Hạng mục hệ thống | Trạng thái hiện tại | Chi tiết kỹ thuật & Chỉ số thực tế |
 | :--- | :---: | :--- |
-| **Commit mới nhất (Remote)** | `487fed6` | Đã push đồng thời lên cả `codex/b18-compact-financial-ui` và `main` |
+| **Commit mới nhất (Remote)** | `37a8058` | Đã push đồng thời lên cả `codex/b18-compact-financial-ui` và `main` |
 | **Tổng số Unit Tests** | `374 / 374 PASS` | 100% pass (Ch1 360 tests + MasterSession 4 tests + Ch2 Engine 6 tests + Ch2 Crises 4 tests) |
 | **Kiểm tra UI Mobile** | `8 / 8 PASS` | `scripts/diagnostics/mobile-final-ui.test.ts` pass hoàn toàn |
 | **Web Production Build** | `THÀNH CÔNG` | `npm run build` hoàn tất không cảnh báo lỗi |
 | **Mobile Production Build** | `THÀNH CÔNG` | `npm --prefix mobile_app run build` hoàn tất không lỗi |
 | **Chương 1 (B18 Cờ Tỷ Phú)** | `HOÀN THIỆN 100%` | 4 Quý 2026, Vàng bứt phá, đệm tiền 10M, Báo cáo sức khỏe, Danger Zone Heartbeat FX, Holographic 2027 Modals |
-| **Chương 2 (Khởi Nghiệp Cafe)**| `HOÀN THIỆN 100% (ENGINE + UI + BARISTA RUSH + CRISES)` | Engine P&L + 12 Thẻ quyết định + 4 Thẻ biến cố khủng hoảng + Mini-game Giờ Cao Điểm 8h + Thẻ Polaroid 3D Tilt + Kẹp Bill Gỗ Animated Receipt + Âm thanh F&B Web Audio |
+| **Chương 2 (Khởi Nghiệp Cafe)**| `HOÀN THIỆN 100% (COZY TYCOON + DOCS)` | Quầy Bar Chibi Khách Hàng + Hũ Tip Leng Keng + Làn Khói Cafe + 12 Cards + 4 Crises + Barista Rush + Kẹp Bill Gỗ + Đồng Bộ 4 Docs |
 | **Chương 3 (Nhân Chuỗi & Vốn)**| `THIẾT KẾ ĐẦY ĐỦ` | GDD chuỗi & Franchise, Bếp trung tâm, Định giá Cap Table, Sổ tay, Design System |
 | **Hệ thống Tài liệu Kiến trúc** | `HOÀN TẤT` | `SYSTEM_ARCHITECTURE.md`, `AGENTS_SOP.md`, 13 file tại `docs/chapters/` |
 
@@ -106,7 +106,7 @@ Mọi Tác nhân AI khi tham gia phát triển dự án PlayBoard phải xác đ
 Trước khi kết thúc bất kỳ lượt nâng cấp nào hoặc tạo commit mới, Agent bắt buộc phải chạy 4 lệnh kiểm tra sau và đảm bảo **100% PASS**:
 
 ```sh
-npm test                                                                        # 360 Unit tests engine (Bắt buộc 100% pass)
+npm test                                                                        # 374 Unit tests engine (Bắt buộc 100% pass)
 node --experimental-strip-types --test scripts/diagnostics/mobile-final-ui.test.ts # Kiểm tra hợp đồng UI Mobile (8 tests pass)
 npm run build                                                                   # Build web production bundle
 npm --prefix mobile_app run build                                               # Build mobile production bundle

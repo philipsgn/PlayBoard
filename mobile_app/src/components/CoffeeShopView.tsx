@@ -18,6 +18,7 @@ import { CoffeeDecisionCard } from './CoffeeDecisionCard.tsx';
 import { CoffeeReceiptModal } from './CoffeeReceiptModal.tsx';
 import { CoffeeCrisisModal } from './CoffeeCrisisModal.tsx';
 import { BaristaRushMiniGame } from './BaristaRushMiniGame.tsx';
+import { ChibiCustomerBar, CustomerEmotion } from './ChibiCustomerBar.tsx';
 
 interface CoffeeShopViewProps {
   onBackToMap: () => void;
@@ -37,13 +38,36 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
     createCoffeeShopGame(initialCapital, bonusRunway)
   );
 
+  const [customerEmotion, setCustomerEmotion] = useState<CustomerEmotion>('idle');
+  const [particleText, setParticleText] = useState<{ id: number; text: string; color: string } | null>(null);
+
+  const triggerParticle = (text: string, color: string = '#34D399') => {
+    setParticleText({ id: Date.now(), text, color });
+    setTimeout(() => setParticleText(null), 1200);
+  };
+
   const handleApplyOption = (optionId: 'A' | 'B' | 'C') => {
     setGame((prev) => {
       const next = applyDecision(prev, optionId);
+      const cashDelta = next.cash - prev.cash;
+      const cupsDelta = next.dailyCupsSold - prev.dailyCupsSold;
+
+      if (cashDelta !== 0) {
+        triggerParticle(`${cashDelta > 0 ? '+' : ''}${money(cashDelta)}`, cashDelta > 0 ? '#34D399' : '#F87171');
+      } else if (cupsDelta > 0) {
+        triggerParticle(`+${cupsDelta} Ly/ngày ☕`, '#38BDF8');
+      }
+
+      if (next.customerSatisfaction > prev.customerSatisfaction) {
+        setCustomerEmotion('happy');
+        setTimeout(() => setCustomerEmotion('idle'), 2500);
+      }
+
       // Sau khi hoàn thành quyết định thứ 2 của mỗi tháng, kích hoạt Thẻ Biến Cố Khủng Hoảng
       if (next.currentCardIndex === 2) {
         const crisisNext = triggerCrisis(next);
         if (crisisNext.phase === 'crisis') {
+          setCustomerEmotion('anxious');
           return crisisNext;
         }
       }
@@ -60,11 +84,24 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
   };
 
   const handleResolveCrisis = (optionId: 'A' | 'B' | 'C') => {
-    setGame((prev) => resolveCrisis(prev, optionId));
+    setGame((prev) => {
+      const next = resolveCrisis(prev, optionId);
+      setCustomerEmotion(next.customerSatisfaction >= prev.customerSatisfaction ? 'happy' : 'idle');
+      setTimeout(() => setCustomerEmotion('idle'), 2500);
+      return next;
+    });
   };
 
   const handleBaristaRushComplete = (score: 0 | 1 | 2 | 3) => {
-    setGame((prev) => applyBaristaRushResult(prev, score));
+    setGame((prev) => {
+      const next = applyBaristaRushResult(prev, score);
+      if (score >= 2) {
+        setCustomerEmotion('happy');
+        triggerParticle(`+${money(next.lastRushTip || 0)} Tip! 🪙`, '#FCD34D');
+        setTimeout(() => setCustomerEmotion('idle'), 3000);
+      }
+      return next;
+    });
   };
 
   const handleContinueSettlement = () => {
@@ -200,7 +237,7 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
           </div>
         </div>
 
-        {/* Row 2: Live Financial Status Indicators (Tiền mặt, Ly/ngày, Hài lòng, Runway) */}
+        {/* Row 2: Chubby Cozy Tycoon HUD Badges (Tiền mặt, Ly/ngày, Hài lòng, Runway) */}
         <div
           style={{
             display: 'grid',
@@ -211,67 +248,60 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
         >
           {/* Tiền mặt */}
           <div
-            className={isDangerCash ? 'hud-cash-danger-pulse' : ''}
+            className={`chubby-hud-badge ${isDangerCash ? 'hud-cash-danger-pulse' : ''}`}
             style={{
-              background: 'rgba(43, 23, 12, 0.85)',
-              border: `1px solid ${isDangerCash ? '#ef4444' : '#b45309'}`,
-              borderRadius: '12px',
-              padding: '4px 6px',
-              textAlign: 'center',
+              background: isDangerCash
+                ? 'linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%)'
+                : 'linear-gradient(180deg, #064e3b 0%, #022c22 100%)',
+              border: `1.5px solid ${isDangerCash ? '#ef4444' : '#10b981'}`,
             }}
           >
-            <div style={{ fontSize: '9px', color: isDangerCash ? '#f87171' : '#fde68a', fontWeight: 800 }}>
+            <div style={{ fontSize: '9px', color: isDangerCash ? '#fca5a5' : '#6ee7b7', fontWeight: 800 }}>
               TIỀN MẶT
             </div>
-            <strong style={{ fontSize: '12px', color: '#ffffff', whiteSpace: 'nowrap' }}>
+            <strong style={{ fontSize: '11.5px', color: '#ffffff', whiteSpace: 'nowrap' }}>
               {money(game.cash)}
             </strong>
           </div>
 
           {/* Lượng ly bán ra/ngày */}
           <div
+            className="chubby-hud-badge"
             style={{
-              background: 'rgba(43, 23, 12, 0.85)',
-              border: '1px solid #0284c7',
-              borderRadius: '12px',
-              padding: '4px 6px',
-              textAlign: 'center',
+              background: 'linear-gradient(180deg, #0c4a6e 0%, #082f49 100%)',
+              border: '1.5px solid #0284c7',
             }}
           >
             <div style={{ fontSize: '9px', color: '#7dd3fc', fontWeight: 800 }}>LY/NGÀY</div>
-            <strong style={{ fontSize: '12px', color: '#ffffff' }}>
+            <strong style={{ fontSize: '11.5px', color: '#ffffff' }}>
               ☕ {game.dailyCupsSold}
             </strong>
           </div>
 
           {/* Độ hài lòng khách hàng */}
           <div
+            className="chubby-hud-badge"
             style={{
-              background: 'rgba(43, 23, 12, 0.85)',
-              border: '1px solid #16a34a',
-              borderRadius: '12px',
-              padding: '4px 6px',
-              textAlign: 'center',
+              background: 'linear-gradient(180deg, #713f12 0%, #451a03 100%)',
+              border: '1.5px solid #eab308',
             }}
           >
-            <div style={{ fontSize: '9px', color: '#86efac', fontWeight: 800 }}>HÀI LÒNG</div>
-            <strong style={{ fontSize: '12px', color: '#ffffff' }}>
+            <div style={{ fontSize: '9px', color: '#fef08a', fontWeight: 800 }}>HÀI LÒNG</div>
+            <strong style={{ fontSize: '11.5px', color: '#ffffff' }}>
               ⭐ {game.customerSatisfaction}%
             </strong>
           </div>
 
           {/* Runway tiền mặt */}
           <div
+            className="chubby-hud-badge"
             style={{
-              background: 'rgba(43, 23, 12, 0.85)',
-              border: '1px solid #d97706',
-              borderRadius: '12px',
-              padding: '4px 6px',
-              textAlign: 'center',
+              background: 'linear-gradient(180deg, #7c2d12 0%, #431407 100%)',
+              border: '1.5px solid #f97316',
             }}
           >
-            <div style={{ fontSize: '9px', color: '#fde68a', fontWeight: 800 }}>RUNWAY</div>
-            <strong style={{ fontSize: '12px', color: '#ffffff' }}>
+            <div style={{ fontSize: '9px', color: '#fed7aa', fontWeight: 800 }}>RUNWAY</div>
+            <strong style={{ fontSize: '11.5px', color: '#ffffff' }}>
               🛡️ {runway === Infinity ? 'Vô hạn' : `${runway}T`}
             </strong>
           </div>
@@ -282,14 +312,47 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
       <main
         style={{
           flex: 1,
-          padding: '16px 12px 24px 12px',
+          padding: '12px 12px 24px 12px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'flex-start',
           boxSizing: 'border-box',
+          position: 'relative',
         }}
       >
+        {/* Floating Particle Text */}
+        {particleText && (
+          <div
+            key={particleText.id}
+            className="particle-float-text"
+            style={{
+              position: 'absolute',
+              top: '80px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: '18px',
+              fontWeight: 900,
+              color: particleText.color,
+              textShadow: '0 2px 8px rgba(0,0,0,0.8)',
+              zIndex: 50,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {particleText.text}
+          </div>
+        )}
+
+        {/* Cozy Tycoon Animated Coffee Bar & Chibi Customer */}
+        {game.phase !== 'chapter_result' && (
+          <ChibiCustomerBar
+            emotion={customerEmotion}
+            satisfaction={game.customerSatisfaction}
+            tipAccumulated={game.lastRushTip || 0}
+            dailyCups={game.dailyCupsSold}
+          />
+        )}
+
         {/* Phase 1: Thẻ Quyết Định Tình Huống (Polaroid 3D Tilt) */}
         {game.phase === 'decisions' && currentCard && (
           <CoffeeDecisionCard

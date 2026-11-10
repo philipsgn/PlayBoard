@@ -747,6 +747,38 @@ class SoundManager {
       // Ignore
     }
   }
+
+  // Tiếng hũ tiền tip leng keng ngọt ngào (Tip Jar Jingle)
+  public playTipJingle() {
+    if (this.isMuted) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      [1567.98, 2093.00, 2349.32].forEach((freq, idx) => {
+        if (!ctx) return;
+        const time = now + idx * 0.07;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.2, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(time);
+        osc.stop(time + 0.3);
+      });
+      this.triggerHaptic('light');
+    } catch {
+      // Ignore
+    }
+  }
 }
 
 export const sound = new SoundManager();
