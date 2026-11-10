@@ -76,6 +76,39 @@ export interface CoffeeShopOutcome {
   brandReputation: number;
 }
 
+// 1. Kho Nguyên Liệu Thực Chiến (Tồn kho & Định mức F&B 2026)
+export interface CoffeeInventory {
+  beansRobustaKg: number;    // Hạt Robusta Lâm Đồng (kg)
+  beansArabicaKg: number;    // Hạt Arabica Cầu Đất (kg)
+  milkSpecialLiters: number; // Sữa tươi tiệt trùng / Dalat Milk (lít)
+  condensedMilkCans: number; // Sữa đặc Ông Thọ (lon)
+  flavorSyrupUnits: number;  // Muối hồng, syrup & phụ liệu (phần)
+}
+
+// 2. Cấp Độ Thiết Bị & Quầy Bar 3D
+export interface EquipmentLevels {
+  espressoMachineLevel: 1 | 2 | 3; // 1: Single Group, 2: Dual Group Inox, 3: Multi-Boiler Pro
+  grinderLevel: 1 | 2;             // 1: Hopper cơ bản, 2: Precision Burr Grinder
+  pastryCabinet: boolean;          // Tủ kính 3 tầng bánh ngọt Croissant
+  ambianceLighting: boolean;       // Đèn thả trần vàng ấm
+}
+
+// 3. Đơn Hàng Thức Uống Ca Trực 3D Vận Hành
+export interface DrinkOrder {
+  id: string;
+  customerName: string;
+  drinkName: string; // 'Cà phê sữa đá' | 'Bạc xỉu' | 'Cà phê muối' | 'Espresso Doppio' | 'Cold brew cam sả'
+  icon: string;
+  recipe: {
+    beanType: 'robusta' | 'arabica';
+    requireMilk: boolean;
+    requireFlavor: boolean;
+  };
+  price: number;
+  tipPotential: number;
+  patienceMax: number; // Giây kiên nhẫn
+}
+
 export interface CoffeeShopState {
   month: 1 | 2 | 3;
   cash: number;                  // Tiền mặt lưu động hiện có (VND)
@@ -88,6 +121,18 @@ export interface CoffeeShopState {
   fixedCosts: FixedCostBreakdown;
   variableCostRatio: number;     // Tỷ lệ biến phí trên doanh thu (ví dụ 0.30 = 30%)
   
+  // Quản lý Kho & Thiết Bị Tycoon 2026
+  inventory: CoffeeInventory;
+  equipment: EquipmentLevels;
+  monthRestockSpent: number;     // Tổng tiền đã chi nhập kho trong tháng
+  monthUpgradeSpent: number;     // Tổng tiền đã chi nâng cấp thiết bị trong tháng
+  
+  // Ca Trực 3D Giờ Cao Điểm (Work Shift)
+  workShiftOrders?: DrinkOrder[];
+  workShiftCompleted?: boolean;
+  workShiftEarnings?: number;
+  workShiftTips?: number;
+
   // Tiến trình đưa ra quyết định
   activeDecisions: string[];     // Danh sách ID các quyết định đã chọn
   currentCardIndex: number;      // 0..3: Vị trí thẻ quyết định trong tháng hiện tại
@@ -100,6 +145,6 @@ export interface CoffeeShopState {
   lastRushTip?: number;
   
   // Trạng thái vòng đời tháng
-  phase: 'briefing' | 'decisions' | 'crisis' | 'barista_rush' | 'monthly_settlement' | 'chapter_result';
+  phase: 'briefing' | 'inventory_shop' | 'decisions' | 'crisis' | 'work_shift_3d' | 'barista_rush' | 'monthly_settlement' | 'chapter_result';
   outcome?: CoffeeShopOutcome;
 }

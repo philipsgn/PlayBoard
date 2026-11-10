@@ -1,13 +1,205 @@
 // Micro-Engine cốt lõi cho Chương 2: Khởi Nghiệp Quán Cà Phê (Coffee Shop Simulator)
 // Vận hành theo mô hình State Machine bất biến (Immutable State Reducer), bám sát GDD 2026.
 
-import type { CoffeeShopState, DecisionCard, CoffeeShopOutcome } from './types.ts';
+import type { CoffeeShopState, DecisionCard, CoffeeShopOutcome, DrinkOrder, CoffeeInventory, EquipmentLevels } from './types.ts';
 import { CHAPTER2_DECISION_CARDS } from './cards.ts';
 import { CHAPTER2_CRISIS_EVENTS, getCrisisForMonth } from './crises.ts';
 import { generateMonthlyPnL, calculateCashRunway } from './pnl.ts';
 
 export const DEFAULT_CAPITAL_CH2 = 90_000_000;
 export const DEFAULT_AVERAGE_ORDER_VALUE = 35_000; // 35.000 VND / ly
+
+// ==========================================
+// A. TYCOON RESTOCK PACKAGES & LOGIC
+// ==========================================
+
+export type RestockItemType = 'beansRobusta' | 'beansArabica' | 'condensedMilk' | 'milkSpecial' | 'flavorSyrup';
+
+export interface RestockPackage {
+  id: string;
+  item: RestockItemType;
+  name: string;
+  amount: number;
+  unit: string;
+  cost: number;
+  description: string;
+}
+
+export const RESTOCK_PACKAGES: RestockPackage[] = [
+  {
+    id: 'restock_robusta_10kg',
+    item: 'beansRobusta',
+    name: 'Hạt Robusta Buôn Ma Thuột (10kg)',
+    amount: 10,
+    unit: 'kg',
+    cost: 1_200_000,
+    description: 'Vị đậm đà, caffein cao, nguyên liệu vàng cho Cà phê phin và Cà phê sữa đá Sài Gòn.',
+  },
+  {
+    id: 'restock_arabica_5kg',
+    item: 'beansArabica',
+    name: 'Hạt Arabica Cầu Đất Thượng Hạng (5kg)',
+    amount: 5,
+    unit: 'kg',
+    cost: 1_500_000,
+    description: 'Hương hoa trái quả, hậu vị ngọt thanh chuẩn Specialty, tối ưu cho Espresso & Cold brew.',
+  },
+  {
+    id: 'restock_condensed_milk_24',
+    item: 'condensedMilk',
+    name: 'Thùng Sữa Đặc Ông Thọ (24 lon)',
+    amount: 24,
+    unit: 'lon',
+    cost: 650_000,
+    description: 'Béo ngậy truyền thống, không thể thiếu cho Bạc xỉu ba tầng và Cà phê sữa đá.',
+  },
+  {
+    id: 'restock_milk_dalat_12l',
+    item: 'milkSpecial',
+    name: 'Sữa Tươi Thanh Trùng Dalat Milk (12 lít)',
+    amount: 12,
+    unit: 'lít',
+    cost: 480_000,
+    description: 'Độ ngọt tự nhiên và tạo bọt mịn xuất sắc cho Latte, Cappuccino và Foam muối béo.',
+  },
+  {
+    id: 'restock_flavor_syrup_15',
+    item: 'flavorSyrup',
+    name: 'Set Muối Hồng & Syrup Đường Mía (15 phần)',
+    amount: 15,
+    unit: 'phần',
+    cost: 450_000,
+    description: 'Gia vị tạo điểm nhấn cho món Cà phê muối béo ngậy và Cold brew trái cây thanh mát.',
+  },
+];
+
+// ==========================================
+// B. TYCOON EQUIPMENT UPGRADES & 3D SPECS
+// ==========================================
+
+export type EquipmentUpgradeType =
+  | 'espressoMachine_2'
+  | 'espressoMachine_3'
+  | 'grinder_2'
+  | 'pastryCabinet'
+  | 'ambianceLighting';
+
+export interface EquipmentUpgradeInfo {
+  type: EquipmentUpgradeType;
+  title: string;
+  description: string;
+  cost: number;
+  dailyCupsBuff: number;
+  satisfactionBuff: number;
+  monthlyDepreciation: number;
+}
+
+export const EQUIPMENT_UPGRADES: Record<EquipmentUpgradeType, EquipmentUpgradeInfo> = {
+  espressoMachine_2: {
+    type: 'espressoMachine_2',
+    title: 'Máy Pha Dual-Group Inox Công Nghiệp',
+    description: '2 họng pha inox áp suất 9 bar chuẩn Ý, tăng tốc độ phục vụ gấp đôi.',
+    cost: 20_000_000,
+    dailyCupsBuff: 12,
+    satisfactionBuff: 6,
+    monthlyDepreciation: 800_000,
+  },
+  espressoMachine_3: {
+    type: 'espressoMachine_3',
+    title: 'Máy Pha Multi-Boiler Inox Pro LED',
+    description: 'Đa nồi hơi kiểm soát nhiệt độ độc lập, chân đế tích hợp LED sang trọng.',
+    cost: 35_000_000,
+    dailyCupsBuff: 20,
+    satisfactionBuff: 10,
+    monthlyDepreciation: 1_400_000,
+  },
+  grinder_2: {
+    type: 'grinder_2',
+    title: 'Máy Xay Kỹ Thuật Số Precision Burr',
+    description: 'Lưỡi dao phẳng 64mm, định lượng tự động từng gram bột mịn đồng đều.',
+    cost: 10_000_000,
+    dailyCupsBuff: 8,
+    satisfactionBuff: 5,
+    monthlyDepreciation: 400_000,
+  },
+  pastryCabinet: {
+    type: 'pastryCabinet',
+    title: 'Tủ Kính 3 Tầng Bánh Ngọt Croissant',
+    description: 'Tủ kính đặt ngay trên quầy bar, kích thích khách hàng gọi thêm combo đồ ăn kèm.',
+    cost: 6_000_000,
+    dailyCupsBuff: 10,
+    satisfactionBuff: 8,
+    monthlyDepreciation: 250_000,
+  },
+  ambianceLighting: {
+    type: 'ambianceLighting',
+    title: 'Đèn Thả Trần Đồng Thau Amber Warm',
+    description: 'Ánh sáng vàng ấm rọi mặt quầy bar, nâng tầm thẩm mỹ và trải nghiệm check-in.',
+    cost: 4_500_000,
+    dailyCupsBuff: 6,
+    satisfactionBuff: 7,
+    monthlyDepreciation: 150_000,
+  },
+};
+
+// ==========================================
+// C. DRINK MENU & WORK SHIFT ORDERS (3D)
+// ==========================================
+
+export const MENU_DRINKS: Omit<DrinkOrder, 'id' | 'customerName' | 'patienceMax'>[] = [
+  {
+    drinkName: 'Cà phê sữa đá Sài Gòn',
+    icon: '☕🧊',
+    recipe: { beanType: 'robusta', requireMilk: true, requireFlavor: false },
+    price: 35_000,
+    tipPotential: 15_000,
+  },
+  {
+    drinkName: 'Bạc xỉu ba tầng ngọt ngào',
+    icon: '🥛☕',
+    recipe: { beanType: 'robusta', requireMilk: true, requireFlavor: false },
+    price: 40_000,
+    tipPotential: 20_000,
+  },
+  {
+    drinkName: 'Cà phê muối béo ngậy xứ Huế',
+    icon: '🧂☕',
+    recipe: { beanType: 'robusta', requireMilk: true, requireFlavor: true },
+    price: 42_000,
+    tipPotential: 25_000,
+  },
+  {
+    drinkName: 'Espresso Doppio Cầu Đất',
+    icon: '☕✨',
+    recipe: { beanType: 'arabica', requireMilk: false, requireFlavor: false },
+    price: 45_000,
+    tipPotential: 20_000,
+  },
+  {
+    drinkName: 'Cold brew cam sả thanh mát',
+    icon: '🍊🧊',
+    recipe: { beanType: 'arabica', requireMilk: false, requireFlavor: true },
+    price: 50_000,
+    tipPotential: 30_000,
+  },
+];
+
+const CUSTOMER_NAMES = ['Hương Giang', 'Minh Quân', 'Lan Anh', 'Thành Đạt', 'Bảo Ngọc', 'Hoàng Nam'];
+
+export function generateWorkShiftOrders(month: number): DrinkOrder[] {
+  const count = month === 1 ? 3 : month === 2 ? 4 : 5;
+  const orders: DrinkOrder[] = [];
+  for (let i = 0; i < count; i++) {
+    const template = MENU_DRINKS[i % MENU_DRINKS.length];
+    orders.push({
+      ...template,
+      id: `order_m${month}_${i + 1}`,
+      customerName: CUSTOMER_NAMES[i % CUSTOMER_NAMES.length],
+      patienceMax: 20,
+    });
+  }
+  return orders;
+}
 
 /**
  * Khởi tạo ván chơi mới cho Chương 2.
@@ -37,6 +229,25 @@ export function createCoffeeShopGame(
       equipmentRental: 0,
     },
     variableCostRatio: 0.30, // 30% giá vốn nguyên vật liệu chuẩn
+    inventory: {
+      beansRobustaKg: 15,
+      beansArabicaKg: 5,
+      milkSpecialLiters: 20,
+      condensedMilkCans: 15,
+      flavorSyrupUnits: 25,
+    },
+    equipment: {
+      espressoMachineLevel: 1,
+      grinderLevel: 1,
+      pastryCabinet: false,
+      ambianceLighting: false,
+    },
+    monthRestockSpent: 0,
+    monthUpgradeSpent: 0,
+    workShiftOrders: [],
+    workShiftCompleted: false,
+    workShiftEarnings: 0,
+    workShiftTips: 0,
     activeDecisions: [],
     currentCardIndex: 0,
     monthlyPnL: [],
@@ -352,6 +563,154 @@ export function executeMonthlySettlement(state: CoffeeShopState): CoffeeShopStat
     currentCardIndex: 0,
     monthlyPnL: updatedMonthlyPnL,
     baristaRushCompleted: false,
+    monthRestockSpent: 0,
+    monthUpgradeSpent: 0,
+    workShiftOrders: [],
+    workShiftCompleted: false,
+    workShiftEarnings: 0,
+    workShiftTips: 0,
     phase: 'decisions',
+  };
+}
+
+// ==========================================
+// D. TYCOON INVENTORY & UPGRADE REDUCERS
+// ==========================================
+
+/**
+ * Nhập một gói nguyên liệu vào kho (Immutable Reducer).
+ */
+export function restockInventory(
+  state: CoffeeShopState,
+  packageId: string
+): CoffeeShopState {
+  const pkg = RESTOCK_PACKAGES.find((p) => p.id === packageId);
+  if (!pkg || state.cash < pkg.cost) return state;
+
+  const nextInventory: CoffeeInventory = { ...state.inventory };
+  if (pkg.item === 'beansRobusta') nextInventory.beansRobustaKg += pkg.amount;
+  else if (pkg.item === 'beansArabica') nextInventory.beansArabicaKg += pkg.amount;
+  else if (pkg.item === 'condensedMilk') nextInventory.condensedMilkCans += pkg.amount;
+  else if (pkg.item === 'milkSpecial') nextInventory.milkSpecialLiters += pkg.amount;
+  else if (pkg.item === 'flavorSyrup') nextInventory.flavorSyrupUnits += pkg.amount;
+
+  return {
+    ...state,
+    cash: state.cash - pkg.cost,
+    inventory: nextInventory,
+    monthRestockSpent: state.monthRestockSpent + pkg.cost,
+  };
+}
+
+/**
+ * Nâng cấp một hạng mục thiết bị quầy bar 3D (Immutable Reducer).
+ */
+export function upgradeEquipment(
+  state: CoffeeShopState,
+  upgradeType: EquipmentUpgradeType
+): CoffeeShopState {
+  const info = EQUIPMENT_UPGRADES[upgradeType];
+  if (!info || state.cash < info.cost) return state;
+
+  const nextEquipment: EquipmentLevels = { ...state.equipment };
+  if (upgradeType === 'espressoMachine_2') {
+    if (nextEquipment.espressoMachineLevel >= 2) return state;
+    nextEquipment.espressoMachineLevel = 2;
+  } else if (upgradeType === 'espressoMachine_3') {
+    if (nextEquipment.espressoMachineLevel >= 3) return state;
+    nextEquipment.espressoMachineLevel = 3;
+  } else if (upgradeType === 'grinder_2') {
+    if (nextEquipment.grinderLevel >= 2) return state;
+    nextEquipment.grinderLevel = 2;
+  } else if (upgradeType === 'pastryCabinet') {
+    if (nextEquipment.pastryCabinet) return state;
+    nextEquipment.pastryCabinet = true;
+  } else if (upgradeType === 'ambianceLighting') {
+    if (nextEquipment.ambianceLighting) return state;
+    nextEquipment.ambianceLighting = true;
+  }
+
+  return {
+    ...state,
+    cash: state.cash - info.cost,
+    equipmentValue: state.equipmentValue + info.cost,
+    fixedCosts: {
+      ...state.fixedCosts,
+      equipmentDepreciation: state.fixedCosts.equipmentDepreciation + info.monthlyDepreciation,
+    },
+    dailyCupsSold: state.dailyCupsSold + info.dailyCupsBuff,
+    customerSatisfaction: Math.min(100, state.customerSatisfaction + info.satisfactionBuff),
+    equipment: nextEquipment,
+    monthUpgradeSpent: state.monthUpgradeSpent + info.cost,
+  };
+}
+
+// ==========================================
+// E. WORK SHIFT 3D ORDER REDUCERS
+// ==========================================
+
+/**
+ * Bắt đầu Ca Trực Giờ Cao Điểm 3D.
+ */
+export function startWorkShift(state: CoffeeShopState): CoffeeShopState {
+  const orders = generateWorkShiftOrders(state.month);
+  return {
+    ...state,
+    workShiftOrders: orders,
+    workShiftCompleted: false,
+    workShiftEarnings: 0,
+    workShiftTips: 0,
+    phase: 'work_shift_3d',
+  };
+}
+
+/**
+ * Hoàn tất một ly thức uống trong Ca Trực 3D.
+ */
+export function completeDrinkOrder(
+  state: CoffeeShopState,
+  orderId: string,
+  success: boolean,
+  tipEarned: number = 0
+): CoffeeShopState {
+  const order = state.workShiftOrders?.find((o) => o.id === orderId);
+  if (!order) return state;
+
+  const nextInventory: CoffeeInventory = { ...state.inventory };
+  if (success) {
+    if (order.recipe.beanType === 'robusta') {
+      nextInventory.beansRobustaKg = Math.max(0, Number((nextInventory.beansRobustaKg - 0.02).toFixed(3)));
+    } else {
+      nextInventory.beansArabicaKg = Math.max(0, Number((nextInventory.beansArabicaKg - 0.02).toFixed(3)));
+    }
+    if (order.recipe.requireMilk) {
+      nextInventory.condensedMilkCans = Math.max(0, Number((nextInventory.condensedMilkCans - 0.1).toFixed(2)));
+    }
+    if (order.recipe.requireFlavor) {
+      nextInventory.flavorSyrupUnits = Math.max(0, nextInventory.flavorSyrupUnits - 1);
+    }
+  }
+
+  const earned = success ? order.price : 0;
+  const actualTip = success ? tipEarned : 0;
+  const nextCash = state.cash + earned + actualTip;
+  const nextSatisfaction = Math.max(
+    0,
+    Math.min(100, state.customerSatisfaction + (success ? 2 : -3))
+  );
+
+  const remainingOrders = (state.workShiftOrders || []).filter((o) => o.id !== orderId);
+  const isFinished = remainingOrders.length === 0;
+
+  return {
+    ...state,
+    cash: nextCash,
+    inventory: nextInventory,
+    customerSatisfaction: nextSatisfaction,
+    workShiftOrders: remainingOrders,
+    workShiftEarnings: (state.workShiftEarnings || 0) + earned,
+    workShiftTips: (state.workShiftTips || 0) + actualTip,
+    workShiftCompleted: isFinished,
+    phase: isFinished ? 'monthly_settlement' : 'work_shift_3d',
   };
 }

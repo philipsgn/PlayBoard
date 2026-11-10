@@ -6,8 +6,12 @@ import {
   executeMonthlySettlement,
   triggerCrisis,
   resolveCrisis,
-  startBaristaRush,
   applyBaristaRushResult,
+  restockInventory,
+  upgradeEquipment,
+  startWorkShift,
+  completeDrinkOrder,
+  EquipmentUpgradeType,
 } from '../../../src/game/chapter2/engine.ts';
 import type { CoffeeShopState } from '../../../src/game/chapter2/types.ts';
 import { calculateCashRunway } from '../../../src/game/chapter2/pnl.ts';
@@ -18,7 +22,14 @@ import { CoffeeDecisionCard } from './CoffeeDecisionCard.tsx';
 import { CoffeeReceiptModal } from './CoffeeReceiptModal.tsx';
 import { CoffeeCrisisModal } from './CoffeeCrisisModal.tsx';
 import { BaristaRushMiniGame } from './BaristaRushMiniGame.tsx';
-import { CoffeeShop3DView, Barista3DAction, Customer3DAction } from './CoffeeShop3DView.tsx';
+import {
+  CoffeeShop3DView,
+  Barista3DAction,
+  Customer3DAction,
+  BaristaStation,
+} from './CoffeeShop3DView.tsx';
+import { CoffeeInventoryShopModal } from './CoffeeInventoryShopModal.tsx';
+import { CoffeeWorkShift3DOverlay } from './CoffeeWorkShift3DOverlay.tsx';
 
 interface CoffeeShopViewProps {
   onBackToMap: () => void;
@@ -40,6 +51,8 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
 
   const [barista3DAction, setBarista3DAction] = useState<Barista3DAction>('idle');
   const [customer3DAction, setCustomer3DAction] = useState<Customer3DAction>('waiting');
+  const [active3DStation, setActive3DStation] = useState<BaristaStation | null>(null);
+  const [isInventoryShopOpen, setIsInventoryShopOpen] = useState(false);
   const [particleText, setParticleText] = useState<{ id: number; text: string; color: string } | null>(null);
 
   const triggerParticle = (text: string, color: string = '#34D399') => {
@@ -77,13 +90,10 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
           return crisisNext;
         }
       }
-      // Khi đã giải quyết xong 4 thẻ quyết định ở Tháng 1 hoặc Tháng 2, chuyển sang Barista Rush
-      if (
-        next.phase === 'monthly_settlement' &&
-        !next.baristaRushCompleted &&
-        (next.month === 1 || next.month === 2)
-      ) {
-        return startBaristaRush(next);
+
+      // Khi đã giải quyết xong 4 thẻ quyết định: Bắt đầu Ca Trực 3D Vận Hành
+      if (next.currentCardIndex >= 4 && next.phase === 'monthly_settlement') {
+        return startWorkShift(next);
       }
       return next;
     });
@@ -101,6 +111,45 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
       }, 2800);
       return next;
     });
+  };
+
+  const handleRestock = (pkgId: string) => {
+    setGame((prev) => {
+      const next = restockInventory(prev, pkgId);
+      triggerParticle(`Nhập kho thành công! 📦`, '#34D399');
+      return next;
+    });
+  };
+
+  const handleUpgrade = (type: EquipmentUpgradeType) => {
+    setGame((prev) => {
+      const next = upgradeEquipment(prev, type);
+      triggerParticle(`Nâng cấp 3D thành công! ⚡`, '#FCD34D');
+      setBarista3DAction('celebrate');
+      setTimeout(() => setBarista3DAction('idle'), 2500);
+      return next;
+    });
+  };
+
+  const handleCompleteOrder = (orderId: string, success: boolean, tip: number) => {
+    setGame((prev) => {
+      const next = completeDrinkOrder(prev, orderId, success, tip);
+      setBarista3DAction('brewing');
+      setCustomer3DAction('delighted');
+      triggerParticle(`+${money(tip)} Tip! 🪙`, '#FCD34D');
+      setTimeout(() => {
+        setBarista3DAction('idle');
+        setCustomer3DAction('waiting');
+      }, 2500);
+      return next;
+    });
+  };
+
+  const handleFinishShift = () => {
+    setGame((prev) => ({
+      ...prev,
+      phase: 'monthly_settlement',
+    }));
   };
 
   const handleBaristaRushComplete = (score: 0 | 1 | 2 | 3) => {
@@ -321,6 +370,55 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
             </strong>
           </div>
         </div>
+
+        {/* Row 3: Thanh Hành Động Tycoon & Nút Mở Kho/Nâng Cấp */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: '4px',
+            padding: '2px 4px',
+          }}
+        >
+          <button
+            onClick={() => {
+              sound.playClick();
+              setIsInventoryShopOpen(true);
+            }}
+            style={{
+              background: 'linear-gradient(90deg, #b45309 0%, #d97706 100%)',
+              border: '1.5px solid #fde68a',
+              borderRadius: '999px',
+              padding: '4px 12px',
+              color: '#ffffff',
+              fontSize: '11px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 8px rgba(180, 83, 9, 0.4)',
+            }}
+          >
+            <span>📦 KHO & NÂNG CẤP 3D</span>
+            <span
+              style={{
+                background: '#451a03',
+                padding: '1px 6px',
+                borderRadius: '999px',
+                fontSize: '9.5px',
+                color: '#fef08a',
+              }}
+            >
+              Lvl {game.equipment.espressoMachineLevel}
+            </span>
+          </button>
+
+          <div style={{ fontSize: '10.5px', color: '#fcd34d', fontWeight: 700 }}>
+            ☕ {game.inventory.beansRobustaKg + game.inventory.beansArabicaKg}kg Hạt • 🥛 {game.inventory.condensedMilkCans} Lon Sữa
+          </div>
+        </div>
       </header>
 
       {/* 2. THREE.JS 3D VIEWPORT: Quán Cà Phê 3D Isometric & Barista / Khách Hàng Chibi */}
@@ -339,6 +437,9 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
             baristaAction={barista3DAction}
             customerAction={game.phase === 'crisis' ? 'anxious' : customer3DAction}
             isCrisis={game.phase === 'crisis'}
+            equipment={game.equipment}
+            activeStation={active3DStation}
+            onStationClick={setActive3DStation}
           />
         </section>
       )}
@@ -395,6 +496,16 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
           <CoffeeCrisisModal
             crisis={game.activeCrisis}
             onSelectOption={handleResolveCrisis}
+          />
+        )}
+
+        {/* Phase 1.7: Ca Trực Giờ Cao Điểm 3D (3-Step Barista Crafting Overlay) */}
+        {game.phase === 'work_shift_3d' && game.workShiftOrders && (
+          <CoffeeWorkShift3DOverlay
+            orders={game.workShiftOrders}
+            onCompleteOrder={handleCompleteOrder}
+            onStationSelect={setActive3DStation}
+            onFinishShift={handleFinishShift}
           />
         )}
 
@@ -550,6 +661,16 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
           </div>
         )}
       </main>
+
+      {/* 4. MODAL QUẢN LÝ KHO NGUYÊN LIỆU & NÂNG CẤP QUẦY BAR 3D */}
+      {isInventoryShopOpen && (
+        <CoffeeInventoryShopModal
+          state={game}
+          onRestock={handleRestock}
+          onUpgrade={handleUpgrade}
+          onClose={() => setIsInventoryShopOpen(false)}
+        />
+      )}
     </div>
   );
 };

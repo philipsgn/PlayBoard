@@ -1,27 +1,40 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import type { EquipmentLevels } from '../../../src/game/chapter2/types';
 
 export type Barista3DAction = 'idle' | 'brewing' | 'celebrate';
 export type Customer3DAction = 'waiting' | 'delighted' | 'anxious';
+export type BaristaStation = 'grind' | 'extract' | 'milk';
 
 interface CoffeeShop3DViewProps {
   baristaAction?: Barista3DAction;
   customerAction?: Customer3DAction;
   isCrisis?: boolean;
+  equipment?: EquipmentLevels;
+  activeStation?: BaristaStation | null;
+  onStationClick?: (station: BaristaStation) => void;
 }
 
 export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
   baristaAction = 'idle',
   customerAction = 'waiting',
   isCrisis = false,
+  equipment = {
+    espressoMachineLevel: 1,
+    grinderLevel: 1,
+    pastryCabinet: false,
+    ambianceLighting: false,
+  },
+  activeStation = null,
+  onStationClick: _onStationClick,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const actionsRef = useRef({ baristaAction, customerAction, isCrisis });
+  const actionsRef = useRef({ baristaAction, customerAction, isCrisis, equipment, activeStation });
 
   // Update refs on prop change for animation loop
   useEffect(() => {
-    actionsRef.current = { baristaAction, customerAction, isCrisis };
-  }, [baristaAction, customerAction, isCrisis]);
+    actionsRef.current = { baristaAction, customerAction, isCrisis, equipment, activeStation };
+  }, [baristaAction, customerAction, isCrisis, equipment, activeStation]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -142,16 +155,19 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
 
     scene.add(counterGroup);
 
-    // 5. MÁY PHA ESPRESSO 3D INOX KIM LOẠI
+    // 5. MÁY PHA ESPRESSO 3D INOX KIM LOẠI (HỖ TRỢ CẤP ĐỘ 1, 2, 3)
     const espressoGroup = new THREE.Group();
     espressoGroup.position.set(-0.8, 1.23, 0);
 
+    const isLvl2 = equipment.espressoMachineLevel >= 2;
+    const isLvl3 = equipment.espressoMachineLevel >= 3;
+
     // Thân máy pha inox
-    const machineBodyGeo = new THREE.BoxGeometry(0.9, 0.65, 0.6);
+    const machineBodyGeo = new THREE.BoxGeometry(isLvl3 ? 1.05 : 0.9, 0.65, 0.6);
     const machineBodyMat = new THREE.MeshStandardMaterial({
-      color: 0xe2e8f0,
-      metalness: 0.85,
-      roughness: 0.2,
+      color: isLvl3 ? 0xf8fafc : 0xe2e8f0,
+      metalness: isLvl2 ? 0.95 : 0.85,
+      roughness: isLvl2 ? 0.12 : 0.2,
     });
     const machineBody = new THREE.Mesh(machineBodyGeo, machineBodyMat);
     machineBody.position.set(0, 0.325, 0);
@@ -159,16 +175,17 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
     espressoGroup.add(machineBody);
 
     // Nóc máy pha (khay sấy cốc)
-    const machineTopGeo = new THREE.BoxGeometry(0.85, 0.05, 0.55);
+    const machineTopGeo = new THREE.BoxGeometry(isLvl3 ? 1.0 : 0.85, 0.05, 0.55);
     const machineTopMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9 });
     const machineTop = new THREE.Mesh(machineTopGeo, machineTopMat);
     machineTop.position.set(0, 0.67, 0);
     espressoGroup.add(machineTop);
 
-    // 2 Group Heads (Đầu chiết xuất)
-    [-0.2, 0.2].forEach((x) => {
-      const groupHeadGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.12, 16);
-      const groupHeadMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9 });
+    // Group Heads & Đồng hồ áp suất Manometer
+    const headPositions = isLvl3 ? [-0.3, 0, 0.3] : isLvl2 ? [-0.22, 0.22] : [0];
+    headPositions.forEach((x) => {
+      const groupHeadGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.12, 16);
+      const groupHeadMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.95 });
       const groupHead = new THREE.Mesh(groupHeadGeo, groupHeadMat);
       groupHead.position.set(x, 0.2, 0.25);
       espressoGroup.add(groupHead);
@@ -182,6 +199,27 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
       espressoGroup.add(handle);
     });
 
+    // Đồng hồ áp suất tròn mặt trước cho máy Lvl 2 & 3
+    if (isLvl2) {
+      [-0.15, 0.15].forEach((gx) => {
+        const gaugeGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.02, 16);
+        const gaugeMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.3 });
+        const gauge = new THREE.Mesh(gaugeGeo, gaugeMat);
+        gauge.rotation.x = Math.PI / 2;
+        gauge.position.set(gx, 0.45, 0.31);
+        espressoGroup.add(gauge);
+      });
+    }
+
+    // Đèn LED gầm đế máy cho máy Level 3 (Multi-Boiler Pro)
+    if (isLvl3) {
+      const ledGeo = new THREE.BoxGeometry(1.0, 0.03, 0.03);
+      const ledMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+      const led = new THREE.Mesh(ledGeo, ledMat);
+      led.position.set(0, 0.02, 0.31);
+      espressoGroup.add(led);
+    }
+
     // Tách cà phê gốm sứ đang chiết xuất
     const cupGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.1, 16);
     const cupMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 });
@@ -192,17 +230,31 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
 
     scene.add(espressoGroup);
 
-    // 6. MÁY XAY HẠT CÀ PHÊ (COFFEE GRINDER)
+    // 6. MÁY XAY HẠT CÀ PHÊ (HỖ TRỢ GRINDER LEVEL 2)
     const grinderGroup = new THREE.Group();
     grinderGroup.position.set(-1.45, 1.23, 0);
-    const grinderBaseGeo = new THREE.CylinderGeometry(0.14, 0.16, 0.45, 16);
-    const grinderBaseMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.5 });
+
+    const isGrinderPro = equipment.grinderLevel >= 2;
+    const grinderBaseGeo = new THREE.CylinderGeometry(isGrinderPro ? 0.16 : 0.14, isGrinderPro ? 0.18 : 0.16, 0.45, 16);
+    const grinderBaseMat = new THREE.MeshStandardMaterial({
+      color: isGrinderPro ? 0x0f172a : 0x334155,
+      metalness: 0.7,
+    });
     const grinderBase = new THREE.Mesh(grinderBaseGeo, grinderBaseMat);
     grinderBase.position.set(0, 0.225, 0);
     grinderGroup.add(grinderBase);
 
+    // Màn hình điện tử hiển thị liều lượng (Dosing Display) cho máy xay Pro
+    if (isGrinderPro) {
+      const displayGeo = new THREE.BoxGeometry(0.12, 0.08, 0.02);
+      const displayMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+      const display = new THREE.Mesh(displayGeo, displayMat);
+      display.position.set(0, 0.3, 0.15);
+      grinderGroup.add(display);
+    }
+
     // Phễu chứa hạt trong suốt (Hopper)
-    const hopperGeo = new THREE.CylinderGeometry(0.16, 0.08, 0.3, 16);
+    const hopperGeo = new THREE.CylinderGeometry(isGrinderPro ? 0.2 : 0.16, 0.08, isGrinderPro ? 0.35 : 0.3, 16);
     const hopperMat = new THREE.MeshStandardMaterial({
       color: 0x78350f,
       roughness: 0.1,
@@ -214,6 +266,94 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
     grinderGroup.add(hopper);
 
     scene.add(grinderGroup);
+
+    // 6.5. CA ĐÁNH SỮA INOX (MILK FROTHING PITCHER)
+    const milkGroup = new THREE.Group();
+    milkGroup.position.set(-0.15, 1.23, 0.2);
+    const pitcherGeo = new THREE.CylinderGeometry(0.07, 0.06, 0.16, 16);
+    const pitcherMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 });
+    const pitcher = new THREE.Mesh(pitcherGeo, pitcherMat);
+    pitcher.position.set(0, 0.08, 0);
+    milkGroup.add(pitcher);
+    scene.add(milkGroup);
+
+    // 6.6. TỦ KÍNH BÁNH NGỌT 3 TẦNG (PASTRY CABINET)
+    const pastryGroup = new THREE.Group();
+    pastryGroup.position.set(1.15, 1.23, 0);
+    pastryGroup.visible = Boolean(equipment.pastryCabinet);
+
+    // Khung kính tủ bánh
+    const cabinetGlassGeo = new THREE.BoxGeometry(0.7, 0.55, 0.5);
+    const cabinetGlassMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.1,
+      transparent: true,
+      opacity: 0.45,
+    });
+    const cabinetGlass = new THREE.Mesh(cabinetGlassGeo, cabinetGlassMat);
+    cabinetGlass.position.set(0, 0.275, 0);
+    pastryGroup.add(cabinetGlass);
+
+    // Kệ kính bên trong & Bánh sừng bò Croissant
+    [-0.1, 0.1].forEach((py) => {
+      const shelfP = new THREE.Mesh(
+        new THREE.BoxGeometry(0.65, 0.02, 0.45),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2 })
+      );
+      shelfP.position.set(0, 0.275 + py, 0);
+      pastryGroup.add(shelfP);
+
+      // Bánh ngọt tròn vàng
+      [-0.18, 0.18].forEach((px) => {
+        const pastryItem = new THREE.Mesh(
+          new THREE.SphereGeometry(0.06, 8, 8),
+          new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 })
+        );
+        pastryItem.scale.set(1.4, 0.7, 0.9);
+        pastryItem.position.set(px, 0.275 + py + 0.05, 0);
+        pastryGroup.add(pastryItem);
+      });
+    });
+    scene.add(pastryGroup);
+
+    // 6.7. BỘ ĐÈN THẢ TRẦN ĐỒNG THAU (AMBIANCE PENDANT LIGHTING)
+    const pendantGroup = new THREE.Group();
+    pendantGroup.visible = Boolean(equipment.ambianceLighting);
+    [-0.7, 0.7].forEach((lx) => {
+      // Dây cáp thả trần
+      const cordGeo = new THREE.CylinderGeometry(0.008, 0.008, 1.2, 8);
+      const cordMat = new THREE.MeshBasicMaterial({ color: 0x1c1917 });
+      const cord = new THREE.Mesh(cordGeo, cordMat);
+      cord.position.set(lx, 3.2, 0.2);
+      pendantGroup.add(cord);
+
+      // Chao đèn nón đồng thau
+      const shadeGeo = new THREE.ConeGeometry(0.18, 0.15, 16, 1, true);
+      const shadeMat = new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.8, roughness: 0.3 });
+      const shade = new THREE.Mesh(shadeGeo, shadeMat);
+      shade.position.set(lx, 2.55, 0.2);
+      pendantGroup.add(shade);
+
+      // Bóng đèn tỏa sáng vàng ấm
+      const bulbLight = new THREE.PointLight(0xfef08a, 1.2, 3.5);
+      bulbLight.position.set(lx, 2.45, 0.2);
+      pendantGroup.add(bulbLight);
+    });
+    scene.add(pendantGroup);
+
+    // 6.8. VÒNG CHỈ THỊ TRẠM PHA CHẾ XÚC GIÁC (STATION HIGHLIGHT RING)
+    const stationRingGeo = new THREE.RingGeometry(0.22, 0.28, 24);
+    const stationRingMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.85,
+    });
+    const stationRing = new THREE.Mesh(stationRingGeo, stationRingMat);
+    stationRing.rotation.x = -Math.PI / 2;
+    stationRing.position.set(-1.45, 1.24, 0);
+    stationRing.visible = false;
+    scene.add(stationRing);
 
     // 7. CHẬU CÂY XANH MONSTERA DECOR QUÁN
     const plantGroup = new THREE.Group();
@@ -467,6 +607,18 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
       } else {
         camera.position.x = THREE.MathUtils.lerp(camera.position.x, 0, 0.1);
         camera.position.y = THREE.MathUtils.lerp(camera.position.y, 3.8, 0.1);
+      }
+
+      // E. Vòng Chỉ Thị Trạm Xúc Giác Đang Hoạt Động (Work Shift Highlight)
+      const { activeStation: currentActiveStation } = actionsRef.current;
+      if (currentActiveStation) {
+        stationRing.visible = true;
+        stationRing.scale.setScalar(1 + Math.sin(elapsedTime * 6) * 0.1);
+        if (currentActiveStation === 'grind') stationRing.position.set(-1.45, 1.24, 0);
+        else if (currentActiveStation === 'extract') stationRing.position.set(-0.8, 1.24, 0.25);
+        else if (currentActiveStation === 'milk') stationRing.position.set(-0.15, 1.24, 0.2);
+      } else {
+        stationRing.visible = false;
       }
 
       renderer.render(scene, camera);
