@@ -90,14 +90,14 @@ Mọi Tác nhân AI khi tham gia phát triển dự án PlayBoard phải xác đ
 | Hạng mục hệ thống | Trạng thái hiện tại | Chi tiết kỹ thuật & Chỉ số thực tế |
 | :--- | :---: | :--- |
 | **Commit mới nhất (Remote)** | `637d2e2` | Đã push đồng thời lên cả `codex/b18-compact-financial-ui` và `main` |
-| **Tổng số Unit Tests** | `382 / 382 PASS` | 100% pass (Ch1 360 tests + MasterSession 4 tests + Ch2 Engine 6 tests + Ch2 Crises 4 tests + Ch2 Tycoon 4 tests + Ch2 Wealth & 100M Journey 4 tests) |
+| **Tổng số Unit Tests** | `386 / 386 PASS` | 100% pass (Ch1 360 tests + MasterSession 4 tests + Ch2 Engine 6 tests + Ch2 Crises 4 tests + Ch2 Tycoon 4 tests + Ch2 Wealth & 100M 4 tests + Stage3D 4 tests) |
 | **Kiểm tra UI Mobile** | `8 / 8 PASS` | `scripts/diagnostics/mobile-final-ui.test.ts` pass hoàn toàn |
 | **Web Production Build** | `THÀNH CÔNG` | `npm run build` hoàn tất không cảnh báo lỗi |
 | **Mobile Production Build** | `THÀNH CÔNG` | `npm --prefix mobile_app run build` hoàn tất không lỗi (Code-split tối ưu) |
-| **Chương 1 (B18 Cờ Tỷ Phú)** | `HOÀN THIỆN 100%` | 4 Quý 2026, Vàng bứt phá, đệm tiền 10M, Báo cáo sức khỏe, Danger Zone Heartbeat FX, Holographic 2027 Modals |
+| **Chương 1 (B18 Cờ Tỷ Phú)** | `HOÀN THIỆN 100% (STAGE 3D L1 HYBRID DIORAMA)` | 4 Quý 2026, Vàng bứt phá, đệm tiền 10M, Báo cáo sức khỏe, Holographic Modals + Stage 3D L1 (Chồng xu tiền mặt, Dây xích nợ, Cờ đích 90M, Ánh sáng 4 vòng) |
 | **Chương 2 (Khởi Nghiệp Cafe)**| `HOÀN THIỆN 100% (COFFEE & WEALTH 100M JOURNEY)` | Three.js 3D Viewport biến đổi thời gian thực + Ca Trực 3D Pha Chế 3 Bước Xúc Giác + Quản Lý Kho & Nâng Cấp Tycoon + The Breakdown (Khói đen & Sửa cờ lê 3D) + Mốc 100M VND (Két vàng & Pháo hoa 3D) + 4 Chỉ Số Kinh Tế Vận Hành (Quality, Speed, Capacity, Satisfaction) + Quỹ Đệm Khẩn Cấp 10M + Kẹp Bill Gỗ P&L |
 | **Chương 3 (Nhân Chuỗi & Vốn)**| `THIẾT KẾ ĐẦY ĐỦ` | GDD chuỗi & Franchise, Bếp trung tâm, Định giá Cap Table, Sổ tay, Design System |
-| **Hệ thống Tài liệu Kiến trúc** | `HOÀN TẤT` | `SYSTEM_ARCHITECTURE.md`, `AGENTS_SOP.md`, 13 file tại `docs/chapters/` |
+| **Hệ thống Tài liệu Kiến trúc** | `HOÀN TẤT` | `SYSTEM_ARCHITECTURE.md`, `AGENTS_SOP.md`, `STAGE_3D_DIORAMA.md`, 13 file tại `docs/chapters/` |
 
 ---
 

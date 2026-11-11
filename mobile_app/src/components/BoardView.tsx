@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Character3D } from './Character3D';
+import { ChapterStage } from '../features/stage3d/ChapterStage.tsx';
 import { Modal } from '../../../src/components/Modal';
 import { tileInformation } from '../../../src/components/tile-information';
 import { GlossaryText } from '../../../src/components/FinancialTerm';
@@ -90,6 +91,12 @@ export const BoardView: React.FC<BoardViewProps> = ({
           pointerEvents: 'none',
           filter: 'drop-shadow(0 20px 32px rgba(0, 0, 0, 0.4))',
         }}
+      />
+
+      {/* 2.5. Lớp Diorama 3D Kẹp Giữa (Stage 3D L1 - Chồng xu, Xích nợ, Cờ đích 90M, Ánh sáng theo vòng) */}
+      <ChapterStage
+        game={game}
+        pawnCoord={currentCoord}
       />
 
       {/* 4-Lap Journey Layout Anchor: Ensures vertical clearance for 3D character pawns without distortion */}
