@@ -216,6 +216,13 @@ export class BaristaCharacter {
         }
         this.group.add(this.glbModel);
 
+        // Gắn socket tay phải vào xương bàn tay của mô hình GLB
+        const socketR = this.glbModel.getObjectByName('socket_handR') || this.glbModel.getObjectByName('Middle1.R');
+        if (socketR) {
+          socketR.add(this.rightHandSocket);
+          this.rightHandSocket.position.set(0, 0, 0);
+        }
+
         // Phát animation Idle mặc định
         this.playAction('CharacterArmature|Idle');
       },

@@ -8,13 +8,16 @@ export class CameraDirector {
 
   private currentPos = new THREE.Vector3(0, 5, 8);
   private targetPos = new THREE.Vector3(0, 5, 8);
-  private currentLookAt = new THREE.Vector3(0, 1, 0);
-  private targetLookAt = new THREE.Vector3(0, 1, 0);
+  private currentLookAt = new THREE.Vector3(0, 0.9, 0);
+  private targetLookAt = new THREE.Vector3(0, 0.9, 0);
+
+  // Khoảng cách tối thiểu bắt buộc theo 05_TECH_SPEC_CAFE3D_SOLO.md (chống đâm xuyên nhân vật & tường)
+  private readonly minDistance = 3.2;
 
   constructor(width: number, height: number) {
     const aspect = width / height;
-    // Tự động mở rộng FOV nếu màn hình hẹp dài 20:9
-    const baseFov = aspect < 0.5 ? 46 : 40;
+    // FOV chuẩn 38° điện ảnh, nhân vật chiếm tối đa ~30-35% chiều cao khung hình
+    const baseFov = aspect < 0.5 ? 42 : 38;
     this.camera = new THREE.PerspectiveCamera(baseFov, aspect, 0.1, 100);
     this.camera.position.copy(this.currentPos);
     this.camera.lookAt(this.currentLookAt);
@@ -27,38 +30,46 @@ export class CameraDirector {
   public resize(width: number, height: number): void {
     const aspect = width / height;
     this.camera.aspect = aspect;
-    this.camera.fov = aspect < 0.5 ? 46 : 40;
+    this.camera.fov = aspect < 0.5 ? 42 : 38;
     this.camera.updateProjectionMatrix();
   }
 
   public update(delta: number, characterPos: THREE.Vector3): void {
     switch (this.currentPreset) {
       case 'OVERVIEW':
-        this.targetPos.set(0.0, 7.5, 9.5);
-        this.targetLookAt.set(0.0, 0.5, 0.0);
+        // Toàn cảnh Dollhouse nhìn từ trên cao xuống 30°
+        this.targetPos.set(0.0, 6.8, 8.5);
+        this.targetLookAt.set(0.0, 0.8, -0.5);
         break;
 
       case 'FOLLOW_WALK':
-        // Camera theo sau lưng Minh một khoảng 3.5m và cao 2.4m
+        // Góc nhìn Dollhouse chúc 30°, cách xa 4.2m và cao 3.2m (không bao giờ che mặt/gáy)
         this.targetPos.set(
-          characterPos.x * 0.5,
-          Math.max(characterPos.y + 2.4, 2.2),
-          characterPos.z + 3.8
+          characterPos.x * 0.35,
+          Math.max(characterPos.y + 3.2, 3.0),
+          characterPos.z + 4.2
         );
-        this.targetLookAt.set(characterPos.x, characterPos.y + 1.25, characterPos.z);
+        this.targetLookAt.set(characterPos.x, characterPos.y + 0.85, characterPos.z);
         break;
 
       case 'BARISTA_ACTION':
-        // Góc cận cảnh quầy bar ngập nắng
-        this.targetPos.set(0.0, 2.7, 1.8);
-        this.targetLookAt.set(0.0, 1.1, -1.9);
+        // Góc quầy bar ngập nắng, nhìn rõ bàn tay và máy pha
+        this.targetPos.set(0.0, 3.4, 2.6);
+        this.targetLookAt.set(0.0, 0.95, -1.8);
         break;
 
       case 'CRISIS_DRAMA':
-        // Góc cận kịch tính biểu cảm khuôn mặt Minh khi có sự cố
-        this.targetPos.set(characterPos.x + 0.35, characterPos.y + 1.45, characterPos.z + 1.25);
-        this.targetLookAt.set(characterPos.x, characterPos.y + 1.35, characterPos.z);
+        // Góc kịch tính nhưng vẫn đảm bảo khoảng cách an toàn >= 3.2m
+        this.targetPos.set(characterPos.x + 0.8, characterPos.y + 2.5, characterPos.z + 3.2);
+        this.targetLookAt.set(characterPos.x, characterPos.y + 1.15, characterPos.z);
         break;
+    }
+
+    // Bảo đảm khoảng cách tối thiểu tuyệt đối không vi phạm minDistance
+    const diff = this.targetPos.clone().sub(this.targetLookAt);
+    if (diff.length() < this.minDistance) {
+      diff.setLength(this.minDistance);
+      this.targetPos.copy(this.targetLookAt).add(diff);
     }
 
     // Damped Exponential Lerp mượt mà

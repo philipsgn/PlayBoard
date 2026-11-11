@@ -27,18 +27,11 @@ import { CoffeeReceiptModal } from './CoffeeReceiptModal.tsx';
 import { CoffeeCrisisModal } from './CoffeeCrisisModal.tsx';
 import { CoffeeBreakdownModal } from './CoffeeBreakdownModal.tsx';
 import { BaristaRushMiniGame } from './BaristaRushMiniGame.tsx';
-import {
-  CoffeeShop3DView,
-  Barista3DAction,
-  Customer3DAction,
-  BaristaStation,
-} from './CoffeeShop3DView.tsx';
 import { CoffeeInventoryShopModal } from './CoffeeInventoryShopModal.tsx';
 import { CoffeeWorkShift3DOverlay } from './CoffeeWorkShift3DOverlay.tsx';
-
-const Dynamic3DWorld = React.lazy(() =>
-  import('../features/stage3d/world/Dynamic3DWorld').then((m) => ({ default: m.Dynamic3DWorld }))
-);
+import { Cafe3DViewport } from '../features/cafe3d/react/Cafe3DViewport.tsx';
+import { useCafeBridge } from '../features/cafe3d/react/useCafeBridge.ts';
+import type { ShiftResult } from '../features/cafe3d/domain/types.ts';
 
 interface CoffeeShopViewProps {
   onBackToMap: () => void;
@@ -58,14 +51,28 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
     createCoffeeShopGame(initialCapital, bonusRunway)
   );
 
-  const [barista3DAction, setBarista3DAction] = useState<Barista3DAction>('idle');
-  const [customer3DAction, setCustomer3DAction] = useState<Customer3DAction>('waiting');
-  const [active3DStation, setActive3DStation] = useState<BaristaStation | null>(null);
   const [isInventoryShopOpen, setIsInventoryShopOpen] = useState(false);
-  const [wrenchRepairActive, setWrenchRepairActive] = useState(false);
-  const [celebrate100M, setCelebrate100M] = useState(false);
-  const [dynamicWorldOpen, setDynamicWorldOpen] = useState(false);
+  const [isFullscreen3D, setIsFullscreen3D] = useState(false);
   const [particleText, setParticleText] = useState<{ id: number; text: string; color: string } | null>(null);
+
+  const { viewportRef, triggerEventAction, triggerWorkShift, resolveVenueFromDecisions } = useCafeBridge();
+
+  const handleShiftCompleted = (result: ShiftResult) => {
+    setGame((prev) => {
+      const bonusCash = result.bonusTips + result.served * 15_000;
+      const nextSatisfaction = Math.min(100, Math.max(0, prev.customerSatisfaction + result.satisfactionDelta));
+      const nextCups = Math.max(10, prev.dailyCupsSold + Math.floor(result.served / 2));
+      triggerParticle(`Ca hoàn tất: +${money(bonusCash)} • +${result.served} ly! 🎉`, '#FCD34D');
+      return {
+        ...prev,
+        cash: prev.cash + bonusCash,
+        customerSatisfaction: nextSatisfaction,
+        dailyCupsSold: nextCups,
+        phase: 'monthly_settlement',
+      };
+    });
+    setIsFullscreen3D(false);
+  };
 
   const triggerParticle = (text: string, color: string = '#34D399') => {
     setParticleText({ id: Date.now(), text, color });
@@ -78,7 +85,6 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
     if (newlyReached.length > 0) {
       setGame(nextState);
       if (newlyReached.includes(100_000_000)) {
-        setCelebrate100M(true);
         sound.playVictory();
         triggerParticle('🎉 ĐẠT MỐC 100 TRIỆU ĐỒNG! KÉT VÀNG ĐẦY TIỀN!', '#FCD34D');
       } else {
@@ -89,6 +95,11 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
   }, [game.cash, game.equipmentValue]);
 
   const handleApplyOption = (optionId: 'A' | 'B' | 'C') => {
+    const card = getCurrentCard(game);
+    if (card) {
+      triggerEventAction(card.id, optionId);
+    }
+
     setGame((prev) => {
       const next = applyDecision(prev, optionId);
       const cashDelta = next.cash - prev.cash;
@@ -99,16 +110,6 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
       } else if (cupsDelta > 0) {
         triggerParticle(`+${cupsDelta} Ly/ngày ☕`, '#38BDF8');
       }
-
-      // Kích hoạt Barista 3D action pha chế & Khách hàng phản hồi
-      setBarista3DAction('brewing');
-      const isHappy = next.customerSatisfaction >= prev.customerSatisfaction;
-      setCustomer3DAction(isHappy ? 'delighted' : 'waiting');
-
-      setTimeout(() => {
-        setBarista3DAction('idle');
-        setCustomer3DAction('waiting');
-      }, 2800);
 
       // Thử thách The Breakdown (Hư hỏng máy pha khói đen) ở Thẻ 1 của Tháng 1
       if (
@@ -124,13 +125,13 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
       if (next.currentCardIndex === 2) {
         const crisisNext = triggerCrisis(next);
         if (crisisNext.phase === 'crisis') {
-          setCustomer3DAction('anxious');
           return crisisNext;
         }
       }
 
       // Khi đã giải quyết xong 4 thẻ quyết định: Bắt đầu Ca Trực 3D Vận Hành
       if (next.currentCardIndex >= 4 && next.phase === 'monthly_settlement') {
+        triggerWorkShift(45);
         return startWorkShift(next);
       }
       return next;
@@ -138,46 +139,27 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
   };
 
   const handleResolveBreakdown = (optionId: 'A' | 'B' | 'C') => {
+    triggerEventAction('BREAKDOWN', optionId);
     setGame((prev) => {
       const next = resolveBreakdownChallenge(prev, optionId);
       const nextDecisions = [...next.activeDecisions, 'BREAKDOWN_RESOLVED'];
       if (optionId === 'A') {
-        setWrenchRepairActive(true);
-        setBarista3DAction('brewing');
         triggerParticle('-3.000.000 đ (Sửa cờ lê) 🔧', '#38BDF8');
-        setTimeout(() => {
-          setWrenchRepairActive(false);
-          setBarista3DAction('idle');
-        }, 3200);
       } else if (optionId === 'B') {
-        setBarista3DAction('celebrate');
-        setCustomer3DAction('delighted');
         triggerParticle('-20M đ (Máy Inox Ý mới!) ✨', '#FCD34D');
-        setTimeout(() => {
-          setBarista3DAction('idle');
-          setCustomer3DAction('waiting');
-        }, 3200);
       } else {
-        setCustomer3DAction('anxious');
         triggerParticle('-500k đ (Tự sửa mất khách) ⚠️', '#EF4444');
-        setTimeout(() => {
-          setCustomer3DAction('waiting');
-        }, 3200);
       }
       return { ...next, activeDecisions: nextDecisions };
     });
   };
 
   const handleResolveCrisis = (optionId: 'A' | 'B' | 'C') => {
+    if (game.activeCrisis) {
+      triggerEventAction(game.activeCrisis.id, optionId);
+    }
     setGame((prev) => {
       const next = resolveCrisis(prev, optionId);
-      const isHappy = next.customerSatisfaction >= prev.customerSatisfaction;
-      setCustomer3DAction(isHappy ? 'delighted' : 'waiting');
-      if (isHappy) setBarista3DAction('celebrate');
-      setTimeout(() => {
-        setCustomer3DAction('waiting');
-        setBarista3DAction('idle');
-      }, 2800);
       return next;
     });
   };
@@ -194,8 +176,6 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
     setGame((prev) => {
       const next = upgradeEquipment(prev, type);
       triggerParticle(`Nâng cấp 3D thành công! ⚡`, '#FCD34D');
-      setBarista3DAction('celebrate');
-      setTimeout(() => setBarista3DAction('idle'), 2500);
       return next;
     });
   };
@@ -203,13 +183,7 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
   const handleCompleteOrder = (orderId: string, success: boolean, tip: number) => {
     setGame((prev) => {
       const next = completeDrinkOrder(prev, orderId, success, tip);
-      setBarista3DAction('brewing');
-      setCustomer3DAction('delighted');
       triggerParticle(`+${money(tip)} Tip! 🪙`, '#FCD34D');
-      setTimeout(() => {
-        setBarista3DAction('idle');
-        setCustomer3DAction('waiting');
-      }, 2500);
       return next;
     });
   };
@@ -225,13 +199,7 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
     setGame((prev) => {
       const next = applyBaristaRushResult(prev, score);
       if (score >= 2) {
-        setCustomer3DAction('delighted');
-        setBarista3DAction('celebrate');
         triggerParticle(`+${money(next.lastRushTip || 0)} Tip! 🪙`, '#FCD34D');
-        setTimeout(() => {
-          setCustomer3DAction('waiting');
-          setBarista3DAction('idle');
-        }, 3200);
       }
       return next;
     });
@@ -580,7 +548,7 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
           <button
             onClick={() => {
               sound.playClick();
-              setDynamicWorldOpen(true);
+              setIsFullscreen3D(!isFullscreen3D);
             }}
             style={{
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -597,7 +565,7 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
               boxShadow: '0 2px 8px rgba(5, 150, 105, 0.4)',
             }}
           >
-            <span>☀️ NẮNG SỚM 3D</span>
+            <span>{isFullscreen3D ? '🗗 THU NHỎ 3D' : '🔍 TOÀN CẢNH 3D'}</span>
           </button>
 
           <div style={{ fontSize: '10.5px', color: '#fcd34d', fontWeight: 700 }}>
@@ -606,28 +574,31 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
         </div>
       </header>
 
-      {/* 2. THREE.JS 3D VIEWPORT: Quán Cà Phê 3D Isometric & Barista / Khách Hàng Chibi */}
+      {/* 2. THREE.JS 3D VIEWPORT: Quán Cà Phê 3D Scandinavian Sáng Ấm & Minh Barista */}
       {game.phase !== 'chapter_result' && (
         <section
           style={{
             width: '100%',
-            height: '280px',
-            minHeight: '250px',
-            maxHeight: '320px',
+            height: isFullscreen3D ? '100%' : '290px',
+            minHeight: isFullscreen3D ? '100%' : '260px',
+            maxHeight: isFullscreen3D ? '100%' : '330px',
+            position: isFullscreen3D ? 'fixed' : 'relative',
+            inset: isFullscreen3D ? 0 : undefined,
+            zIndex: isFullscreen3D ? 100 : 10,
             flexShrink: 0,
-            position: 'relative',
+            padding: isFullscreen3D ? '0' : '0 12px',
+            boxSizing: 'border-box',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <CoffeeShop3DView
-            baristaAction={barista3DAction}
-            customerAction={game.phase === 'crisis' ? 'anxious' : customer3DAction}
-            isCrisis={game.phase === 'crisis'}
-            equipment={game.equipment}
-            activeStation={active3DStation}
-            onStationClick={setActive3DStation}
-            isBreakdown={game.breakdownActive}
-            isRepairing={wrenchRepairActive}
-            celebrate100M={celebrate100M}
+          <Cafe3DViewport
+            ref={viewportRef}
+            venue={resolveVenueFromDecisions(game.activeDecisions)}
+            cupsPerDay={game.dailyCupsSold}
+            seed={`ch2_m${game.month}`}
+            isEmbedded={!isFullscreen3D}
+            onToggleFullscreen={() => setIsFullscreen3D(!isFullscreen3D)}
+            onCompleteShift={handleShiftCompleted}
           />
         </section>
       )}
@@ -700,7 +671,7 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
           <CoffeeWorkShift3DOverlay
             orders={game.workShiftOrders}
             onCompleteOrder={handleCompleteOrder}
-            onStationSelect={setActive3DStation}
+            onStationSelect={() => {}}
             onFinishShift={handleFinishShift}
           />
         )}
@@ -866,16 +837,6 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
           onUpgrade={handleUpgrade}
           onClose={() => setIsInventoryShopOpen(false)}
         />
-      )}
-
-      {/* 5. THẾ GIỚI 3D ĐỘNG TOÀN CẢNH: NẮNG SỚM & ACTIONS BIỂU DIỄN TÌNH HUỐNG */}
-      {dynamicWorldOpen && (
-        <React.Suspense fallback={null}>
-          <Dynamic3DWorld
-            initialRoutine={game.phase === 'crisis' ? 'crisis' : 'morning'}
-            onClose={() => setDynamicWorldOpen(false)}
-          />
-        </React.Suspense>
       )}
     </div>
   );

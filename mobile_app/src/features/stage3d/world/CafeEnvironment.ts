@@ -274,16 +274,18 @@ export class CafeEnvironment {
     monsteraGroup.position.set(-2.8, 0, 0.4);
     this.group.add(monsteraGroup);
 
-    // 7.2 Dây leo trầu bà rủ từ mép kệ treo tường (Pothos)
-    const vineGroup = new THREE.Group();
-    for (let j = 0; j < 6; j++) {
-      const vineGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.65, 8);
-      const vine = new THREE.Mesh(vineGeo, foliageMat);
-      vine.position.set(-1.0 + j * 0.35, 2.05, -3.8);
-      vine.rotation.z = Math.sin(j) * 0.15;
-      vineGroup.add(vine);
-    }
-    this.group.add(vineGroup);
+    // 7.2 Chậu cây trầu bà rủ trên kệ (Pothos có chậu và vòm lá tròn, không dùng que rủ thô)
+    const pothosGroup = new THREE.Group();
+    const shelfPotGeo = new THREE.CylinderGeometry(0.12, 0.09, 0.16, 12);
+    const shelfPot = new THREE.Mesh(shelfPotGeo, potMat);
+    shelfPot.position.set(0.8, 2.12, -3.8);
+    pothosGroup.add(shelfPot);
+
+    const foliageClusterGeo = new THREE.DodecahedronGeometry(0.2, 1);
+    const foliageCluster = new THREE.Mesh(foliageClusterGeo, foliageMat);
+    foliageCluster.position.set(0.8, 2.25, -3.8);
+    pothosGroup.add(foliageCluster);
+    this.group.add(pothosGroup);
 
     // 7.3 Chậu cây bàng cảnh góc phải (Ficus)
     const ficusGroup = new THREE.Group();

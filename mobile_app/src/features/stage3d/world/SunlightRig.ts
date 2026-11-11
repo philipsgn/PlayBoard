@@ -8,7 +8,7 @@ export class SunlightRig {
   private dustPoints: THREE.Points;
   private dustGeo: THREE.BufferGeometry;
   private dustPositions: Float32Array;
-  private dustCount = 40;
+  private dustCount = 20;
 
   constructor() {
     this.group = new THREE.Group();
@@ -54,9 +54,9 @@ export class SunlightRig {
 
     const dustMat = new THREE.PointsMaterial({
       color: 0xfef08a,
-      size: 0.05,
+      size: 0.015,
       transparent: true,
-      opacity: 0.65,
+      opacity: 0.45,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });

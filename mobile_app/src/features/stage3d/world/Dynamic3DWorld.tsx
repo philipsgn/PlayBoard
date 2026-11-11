@@ -16,6 +16,7 @@ export const Dynamic3DWorld: React.FC<Dynamic3DWorldProps> = ({ onClose, initial
   const mountRef = useRef<HTMLDivElement>(null);
   const [speed, setSpeed] = useState<1 | 2>(1);
   const [currentActionTitle, setCurrentActionTitle] = useState('Đang khởi tạo không gian...');
+  const [isDebug] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '3d');
   const runnerRef = useRef<ActionRunner | null>(null);
 
   useEffect(() => {
@@ -338,76 +339,78 @@ export const Dynamic3DWorld: React.FC<Dynamic3DWorldProps> = ({ onClose, initial
           </div>
         </div>
 
-        {/* Action Triggers */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
-          <button
-            onClick={handlePlayMorning}
-            style={{
-              padding: '8px 10px',
-              borderRadius: '10px',
-              border: 'none',
-              background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
-              color: '#ffffff',
-              fontSize: '11.5px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              textAlign: 'center',
-            }}
-          >
-            ☀️ Mở Quán Sáng (Cửa Xoay 90°)
-          </button>
+        {/* Action Triggers chỉ hiển thị trong chế độ debug (?debug=3d) */}
+        {isDebug && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+            <button
+              onClick={handlePlayMorning}
+              style={{
+                padding: '8px 10px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                color: '#ffffff',
+                fontSize: '11.5px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              ☀️ Mở Quán Sáng (Cửa Xoay 90°)
+            </button>
 
-          <button
-            onClick={() => handlePlayCrisisReviewer('A')}
-            style={{
-              padding: '8px 10px',
-              borderRadius: '10px',
-              border: 'none',
-              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-              color: '#ffffff',
-              fontSize: '11.5px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              textAlign: 'center',
-            }}
-          >
-            ⭐ Reviewer (Phương án A)
-          </button>
+            <button
+              onClick={() => handlePlayCrisisReviewer('A')}
+              style={{
+                padding: '8px 10px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                color: '#ffffff',
+                fontSize: '11.5px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              ⭐ Reviewer (Phương án A)
+            </button>
 
-          <button
-            onClick={() => handlePlayCrisisReviewer('B')}
-            style={{
-              padding: '8px 10px',
-              borderRadius: '10px',
-              border: 'none',
-              background: '#334155',
-              color: '#cbd5e1',
-              fontSize: '11px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              textAlign: 'center',
-            }}
-          >
-            ⚠️ Reviewer (Phương án B)
-          </button>
+            <button
+              onClick={() => handlePlayCrisisReviewer('B')}
+              style={{
+                padding: '8px 10px',
+                borderRadius: '10px',
+                border: 'none',
+                background: '#334155',
+                color: '#cbd5e1',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              ⚠️ Reviewer (Phương án B)
+            </button>
 
-          <button
-            onClick={() => handlePlayCrisisReviewer('C')}
-            style={{
-              padding: '8px 10px',
-              borderRadius: '10px',
-              border: 'none',
-              background: '#ef4444',
-              color: '#ffffff',
-              fontSize: '11px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              textAlign: 'center',
-            }}
-          >
-            ❌ Reviewer (Phương án C)
-          </button>
-        </div>
+            <button
+              onClick={() => handlePlayCrisisReviewer('C')}
+              style={{
+                padding: '8px 10px',
+                borderRadius: '10px',
+                border: 'none',
+                background: '#ef4444',
+                color: '#ffffff',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              ❌ Reviewer (Phương án C)
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
