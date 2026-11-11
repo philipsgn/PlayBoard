@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   createCoffeeShopGame,
   getCurrentCard,
@@ -11,6 +11,10 @@ import {
   upgradeEquipment,
   startWorkShift,
   completeDrinkOrder,
+  calculateNetWealth,
+  checkMilestoneUnlocks,
+  triggerBreakdown,
+  resolveBreakdownChallenge,
   EquipmentUpgradeType,
 } from '../../../src/game/chapter2/engine.ts';
 import type { CoffeeShopState } from '../../../src/game/chapter2/types.ts';
@@ -21,6 +25,7 @@ import { sound } from '../utils/audio.ts';
 import { CoffeeDecisionCard } from './CoffeeDecisionCard.tsx';
 import { CoffeeReceiptModal } from './CoffeeReceiptModal.tsx';
 import { CoffeeCrisisModal } from './CoffeeCrisisModal.tsx';
+import { CoffeeBreakdownModal } from './CoffeeBreakdownModal.tsx';
 import { BaristaRushMiniGame } from './BaristaRushMiniGame.tsx';
 import {
   CoffeeShop3DView,
@@ -53,12 +58,30 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
   const [customer3DAction, setCustomer3DAction] = useState<Customer3DAction>('waiting');
   const [active3DStation, setActive3DStation] = useState<BaristaStation | null>(null);
   const [isInventoryShopOpen, setIsInventoryShopOpen] = useState(false);
+  const [wrenchRepairActive, setWrenchRepairActive] = useState(false);
+  const [celebrate100M, setCelebrate100M] = useState(false);
   const [particleText, setParticleText] = useState<{ id: number; text: string; color: string } | null>(null);
 
   const triggerParticle = (text: string, color: string = '#34D399') => {
     setParticleText({ id: Date.now(), text, color });
-    setTimeout(() => setParticleText(null), 1200);
+    setTimeout(() => setParticleText(null), 1400);
   };
+
+  // Theo dõi kiểm tra các cột mốc tài sản (25M, 50M, 75M, 100M VND)
+  useEffect(() => {
+    const { nextState, newlyReached } = checkMilestoneUnlocks(game);
+    if (newlyReached.length > 0) {
+      setGame(nextState);
+      if (newlyReached.includes(100_000_000)) {
+        setCelebrate100M(true);
+        sound.playVictory();
+        triggerParticle('🎉 ĐẠT MỐC 100 TRIỆU ĐỒNG! KÉT VÀNG ĐẦY TIỀN!', '#FCD34D');
+      } else {
+        const highest = Math.max(...newlyReached);
+        triggerParticle(`✨ MỐC TÀI CHÍNH: ${money(highest)}!`, '#38BDF8');
+      }
+    }
+  }, [game.cash, game.equipmentValue]);
 
   const handleApplyOption = (optionId: 'A' | 'B' | 'C') => {
     setGame((prev) => {
@@ -82,6 +105,16 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
         setCustomer3DAction('waiting');
       }, 2800);
 
+      // Thử thách The Breakdown (Hư hỏng máy pha khói đen) ở Thẻ 1 của Tháng 1
+      if (
+        next.month === 1 &&
+        next.currentCardIndex === 1 &&
+        !next.breakdownActive &&
+        !next.activeDecisions.includes('BREAKDOWN_RESOLVED')
+      ) {
+        return triggerBreakdown(next);
+      }
+
       // Sau khi hoàn thành quyết định thứ 2 của mỗi tháng, kích hoạt Thẻ Biến Cố Khủng Hoảng
       if (next.currentCardIndex === 2) {
         const crisisNext = triggerCrisis(next);
@@ -96,6 +129,37 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
         return startWorkShift(next);
       }
       return next;
+    });
+  };
+
+  const handleResolveBreakdown = (optionId: 'A' | 'B' | 'C') => {
+    setGame((prev) => {
+      const next = resolveBreakdownChallenge(prev, optionId);
+      const nextDecisions = [...next.activeDecisions, 'BREAKDOWN_RESOLVED'];
+      if (optionId === 'A') {
+        setWrenchRepairActive(true);
+        setBarista3DAction('brewing');
+        triggerParticle('-3.000.000 đ (Sửa cờ lê) 🔧', '#38BDF8');
+        setTimeout(() => {
+          setWrenchRepairActive(false);
+          setBarista3DAction('idle');
+        }, 3200);
+      } else if (optionId === 'B') {
+        setBarista3DAction('celebrate');
+        setCustomer3DAction('delighted');
+        triggerParticle('-20M đ (Máy Inox Ý mới!) ✨', '#FCD34D');
+        setTimeout(() => {
+          setBarista3DAction('idle');
+          setCustomer3DAction('waiting');
+        }, 3200);
+      } else {
+        setCustomer3DAction('anxious');
+        triggerParticle('-500k đ (Tự sửa mất khách) ⚠️', '#EF4444');
+        setTimeout(() => {
+          setCustomer3DAction('waiting');
+        }, 3200);
+      }
+      return { ...next, activeDecisions: nextDecisions };
     });
   };
 
@@ -196,6 +260,9 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
   const latestPnL = game.monthlyPnL[game.monthlyPnL.length - 1];
   const runway = calculateCashRunway(game.cash, latestPnL ? latestPnL.netProfit : -10_000_000);
   const isDangerCash = game.cash < 5_000_000;
+  const netWealth = calculateNetWealth(game);
+  const wealthProgressPercent = Math.min(100, Math.round((netWealth / game.targetWealthGoal) * 100));
+  const isEmergencyLow = game.cash < game.emergencyFundBuffer;
 
   return (
     <div
@@ -298,6 +365,96 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
             >
               🔄
             </button>
+          </div>
+        </div>
+
+        {/* Row 1.5: Target Wealth Progress Bar: Coffee & Wealth Hành Trình 100 Triệu */}
+        <div
+          style={{
+            background: 'rgba(0, 0, 0, 0.55)',
+            border: netWealth >= 100_000_000 ? '1.5px solid #facc15' : '1px solid rgba(251, 191, 36, 0.3)',
+            borderRadius: '12px',
+            padding: '6px 10px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            boxShadow: netWealth >= 100_000_000 ? '0 0 16px rgba(250, 204, 21, 0.5)' : 'none',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+            <span style={{ fontWeight: 800, color: '#fde68a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span>🏆</span> MỤC TIÊU TÀI SẢN (100M VND):
+            </span>
+            <span style={{ fontWeight: 900, color: netWealth >= 100_000_000 ? '#4ade80' : '#f59e0b' }}>
+              {money(netWealth)} / {money(game.targetWealthGoal)} ({wealthProgressPercent}%)
+            </span>
+          </div>
+
+          <div
+            style={{
+              width: '100%',
+              height: '8px',
+              backgroundColor: '#27272a',
+              borderRadius: '999px',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                width: `${wealthProgressPercent}%`,
+                height: '100%',
+                background: netWealth >= 100_000_000
+                  ? 'linear-gradient(90deg, #eab308 0%, #22c55e 100%)'
+                  : 'linear-gradient(90deg, #d97706 0%, #f59e0b 100%)',
+                borderRadius: '999px',
+                transition: 'width 0.4s ease',
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#a1a1aa', fontWeight: 700 }}>
+            <span>25M</span>
+            <span>50M</span>
+            <span>75M</span>
+            <span style={{ color: netWealth >= 100_000_000 ? '#facc15' : '#a1a1aa' }}>100M VND 🏁</span>
+          </div>
+        </div>
+
+        {/* Row 1.7: 4 Chỉ Số Kinh Tế Vận Hành (Quality, Speed, Capacity, Satisfaction) & Quỹ Đệm */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr) auto',
+            gap: '4px',
+            alignItems: 'center',
+          }}
+        >
+          <div style={{ background: '#27272a', padding: '3px 4px', borderRadius: '6px', textAlign: 'center', fontSize: '9.5px' }}>
+            <span style={{ color: '#93c5fd' }}>☕ Vị:</span> <strong style={{ color: '#fff' }}>{game.metrics.quality}%</strong>
+          </div>
+          <div style={{ background: '#27272a', padding: '3px 4px', borderRadius: '6px', textAlign: 'center', fontSize: '9.5px' }}>
+            <span style={{ color: '#fde047' }}>⚡ Tốc độ:</span> <strong style={{ color: '#fff' }}>{game.metrics.speed}%</strong>
+          </div>
+          <div style={{ background: '#27272a', padding: '3px 4px', borderRadius: '6px', textAlign: 'center', fontSize: '9.5px' }}>
+            <span style={{ color: '#a7f3d0' }}>👥 Khách:</span> <strong style={{ color: '#fff' }}>{game.metrics.capacity}</strong>
+          </div>
+          <div style={{ background: '#27272a', padding: '3px 4px', borderRadius: '6px', textAlign: 'center', fontSize: '9.5px' }}>
+            <span style={{ color: '#fbcfe8' }}>⭐ Hài lòng:</span> <strong style={{ color: '#fff' }}>{game.metrics.satisfaction}%</strong>
+          </div>
+          <div
+            style={{
+              background: isEmergencyLow ? '#7f1d1d' : '#14532d',
+              border: `1px solid ${isEmergencyLow ? '#ef4444' : '#22c55e'}`,
+              padding: '3px 6px',
+              borderRadius: '6px',
+              fontSize: '9px',
+              fontWeight: 800,
+              color: isEmergencyLow ? '#fca5a5' : '#86efac',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {isEmergencyLow ? '⚠️ ĐỆM < 10M' : '🛡️ ĐỆM AN TOÀN'}
           </div>
         </div>
 
@@ -440,6 +597,9 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
             equipment={game.equipment}
             activeStation={active3DStation}
             onStationClick={setActive3DStation}
+            isBreakdown={game.breakdownActive}
+            isRepairing={wrenchRepairActive}
+            celebrate100M={celebrate100M}
           />
         </section>
       )}
@@ -496,6 +656,14 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
           <CoffeeCrisisModal
             crisis={game.activeCrisis}
             onSelectOption={handleResolveCrisis}
+          />
+        )}
+
+        {/* Phase 1.6: Thử Thách The Breakdown: Máy Pha Cafe Bốc Khói */}
+        {game.breakdownActive && (
+          <CoffeeBreakdownModal
+            cash={game.cash}
+            onSelectOption={handleResolveBreakdown}
           />
         )}
 

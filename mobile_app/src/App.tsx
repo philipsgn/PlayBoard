@@ -1,5 +1,5 @@
 import { localizeNarrative } from '../../src/components/glossary'
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, lazy, Suspense } from 'react'
 import tilesData from './data/tiles.json'
 import { boardFor } from '../../src/data/board'
 import { goalProgress } from '../../src/game/selectors'
@@ -32,7 +32,7 @@ import { SettingsModal } from './components/SettingsModal'
 import { hasSeenTutorial } from './game/onboarding'
 import { MapScreen } from './components/MapScreen'
 import type { MapNodeConfig } from './game/map-progress'
-import { CoffeeShopView } from './components/CoffeeShopView'
+const CoffeeShopView = lazy(() => import('./components/CoffeeShopView').then(m => ({ default: m.CoffeeShopView })))
 import { loadMasterProfile, recordChapter1Victory } from '../../src/game/master-session'
 
 // Coordinates are artwork metadata; category/order/labels come from the official C20 or B18 board.
@@ -441,10 +441,12 @@ export default function App() {
         </MobileContainer>
       ) : screen === 'chapter2' ? (
         <MobileContainer>
-          <CoffeeShopView
-            onBackToMap={() => setScreen('map')}
-            onOpenHelp={openHelp}
-          />
+          <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center', color: '#fde68a' }}>Đang tải Quán Cà Phê...</div>}>
+            <CoffeeShopView
+              onBackToMap={() => setScreen('map')}
+              onOpenHelp={openHelp}
+            />
+          </Suspense>
         </MobileContainer>
       ) : screen === 'map' ? (
         <MobileContainer>

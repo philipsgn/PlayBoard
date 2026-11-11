@@ -109,6 +109,14 @@ export interface DrinkOrder {
   patienceMax: number; // Giây kiên nhẫn
 }
 
+// 4. Chỉ Số Kinh Tế Vận Hành (Masterprompt Operational Metrics)
+export interface OperationalMetrics {
+  quality: number;      // 0..100: Chất lượng thức uống (ảnh hưởng giá bán & độ hài lòng)
+  speed: number;        // 0..100: Tốc độ phục vụ (ảnh hưởng năng suất giờ cao điểm)
+  capacity: number;     // 0..100: Sức chứa chỗ ngồi quán phòng (quyết định số khách ngồi lại)
+  satisfaction: number; // 0..100: Độ hài lòng tổng thể không gian & phục vụ
+}
+
 export interface CoffeeShopState {
   month: 1 | 2 | 3;
   cash: number;                  // Tiền mặt lưu động hiện có (VND)
@@ -120,6 +128,16 @@ export interface CoffeeShopState {
   customerSatisfaction: number;  // Độ hài lòng khách hàng (0..100)
   fixedCosts: FixedCostBreakdown;
   variableCostRatio: number;     // Tỷ lệ biến phí trên doanh thu (ví dụ 0.30 = 30%)
+  
+  // 4 Chỉ Số Kinh Tế Vận Hành Cốt Lõi (Coffee & Wealth 100M)
+  metrics: OperationalMetrics;
+  targetWealthGoal: number;      // Mốc tài sản hướng tới (100.000.000 VND)
+  emergencyFundBuffer: number;   // Ngưỡng Quỹ Khẩn Cấp an toàn (10.000.000 VND)
+  reachedMilestones: number[];   // Danh sách các mốc đã chạm: [25M, 50M, 75M, 100M]
+  
+  // Trạng thái Thử thách Hư Hỏng Thiết Bị 3D (The Breakdown)
+  breakdownActive: boolean;      // Máy pha bốc khói đen
+  wrenchRepairActive: boolean;   // Barista đang cầm cờ lê vặn ốc
   
   // Quản lý Kho & Thiết Bị Tycoon 2026
   inventory: CoffeeInventory;

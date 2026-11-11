@@ -13,6 +13,9 @@ interface CoffeeShop3DViewProps {
   equipment?: EquipmentLevels;
   activeStation?: BaristaStation | null;
   onStationClick?: (station: BaristaStation) => void;
+  isBreakdown?: boolean;
+  isRepairing?: boolean;
+  celebrate100M?: boolean;
 }
 
 export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
@@ -27,14 +30,44 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
   },
   activeStation = null,
   onStationClick: _onStationClick,
+  isBreakdown = false,
+  isRepairing = false,
+  celebrate100M = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const actionsRef = useRef({ baristaAction, customerAction, isCrisis, equipment, activeStation });
+  const actionsRef = useRef({
+    baristaAction,
+    customerAction,
+    isCrisis,
+    equipment,
+    activeStation,
+    isBreakdown,
+    isRepairing,
+    celebrate100M,
+  });
 
   // Update refs on prop change for animation loop
   useEffect(() => {
-    actionsRef.current = { baristaAction, customerAction, isCrisis, equipment, activeStation };
-  }, [baristaAction, customerAction, isCrisis, equipment, activeStation]);
+    actionsRef.current = {
+      baristaAction,
+      customerAction,
+      isCrisis,
+      equipment,
+      activeStation,
+      isBreakdown,
+      isRepairing,
+      celebrate100M,
+    };
+  }, [
+    baristaAction,
+    customerAction,
+    isCrisis,
+    equipment,
+    activeStation,
+    isBreakdown,
+    isRepairing,
+    celebrate100M,
+  ]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -96,6 +129,115 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
     wall.receiveShadow = true;
     scene.add(wall);
 
+    // Lam gỗ dọc 3D trang trí vách tường sau phong cách Lofi/Japandi
+    for (let lx = -4.6; lx <= 4.6; lx += 0.35) {
+      const slatGeo = new THREE.BoxGeometry(0.08, 4.8, 0.05);
+      const slatMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.5 });
+      const slat = new THREE.Mesh(slatGeo, slatMat);
+      slat.position.set(lx, 2.5, -2.38);
+      scene.add(slat);
+    }
+
+    // Cửa sổ kính lớn bên trái đón ánh nắng tự nhiên
+    const windowFrameGeo = new THREE.BoxGeometry(0.12, 2.6, 2.2);
+    const windowFrameMat = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.4 });
+    const windowFrame = new THREE.Mesh(windowFrameGeo, windowFrameMat);
+    windowFrame.position.set(-4.5, 2.6, -0.6);
+    scene.add(windowFrame);
+
+    const windowGlassGeo = new THREE.BoxGeometry(0.02, 2.4, 2.0);
+    const windowGlassMat = new THREE.MeshStandardMaterial({
+      color: 0x93c5fd,
+      roughness: 0.1,
+      transparent: true,
+      opacity: 0.4,
+    });
+    const windowGlass = new THREE.Mesh(windowGlassGeo, windowGlassMat);
+    windowGlass.position.set(-4.5, 2.6, -0.6);
+    scene.add(windowGlass);
+
+    // Vệt nắng xiên tự nhiên (Sunlight Beam Effect) rọi xuống sàn gỗ
+    const sunBeamGeo = new THREE.CylinderGeometry(0.6, 2.0, 4.2, 16);
+    const sunBeamMat = new THREE.MeshBasicMaterial({
+      color: 0xfef08a,
+      transparent: true,
+      opacity: 0.08,
+      side: THREE.DoubleSide,
+    });
+    const sunBeam = new THREE.Mesh(sunBeamGeo, sunBeamMat);
+    sunBeam.position.set(-2.6, 1.8, 0.4);
+    sunBeam.rotation.z = Math.PI / 4.2;
+    sunBeam.rotation.y = -Math.PI / 6;
+    scene.add(sunBeam);
+
+    // 2 BỘ BÀN GHẾ CÀ PHÊ PHÒNG (CAPACITY & AMBIENCE)
+    // Bộ 1: Phía trước bên trái
+    const tableGroup1 = new THREE.Group();
+    tableGroup1.position.set(-2.2, 0, 0.9);
+    // Mặt bàn tròn
+    const tableTopGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.04, 20);
+    const tableMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 });
+    const tableTop = new THREE.Mesh(tableTopGeo, tableMat);
+    tableTop.position.set(0, 0.75, 0);
+    tableTop.castShadow = true;
+    tableGroup1.add(tableTop);
+    // Chân bàn
+    const tableLegGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.73, 12);
+    const tableLeg = new THREE.Mesh(tableLegGeo, tableMat);
+    tableLeg.position.set(0, 0.365, 0);
+    tableGroup1.add(tableLeg);
+
+    // 2 Ghế gỗ có tựa
+    [-0.45, 0.45].forEach((cx) => {
+      const chairGroup = new THREE.Group();
+      chairGroup.position.set(cx, 0, 0);
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.04, 0.24), tableMat);
+      seat.position.set(0, 0.45, 0);
+      chairGroup.add(seat);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.28, 0.03), tableMat);
+      back.position.set(0, 0.6, cx > 0 ? 0.1 : -0.1);
+      chairGroup.add(back);
+      tableGroup1.add(chairGroup);
+    });
+
+    // Ly cafe sứ trên bàn 1
+    const tableCup = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.03, 0.06, 12),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })
+    );
+    tableCup.position.set(0.08, 0.8, 0.05);
+    tableGroup1.add(tableCup);
+
+    // Khách hàng Chibi đang ngồi uống cafe ở bàn 1
+    const seatedCust = new THREE.Group();
+    seatedCust.position.set(-0.45, 0.2, 0);
+    const seatedBody = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.16, 0.45, 12),
+      new THREE.MeshStandardMaterial({ color: 0x8b5cf6, roughness: 0.6 })
+    );
+    seatedBody.position.set(0, 0.4, 0);
+    seatedCust.add(seatedBody);
+    const seatedHead = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 16, 16),
+      new THREE.MeshStandardMaterial({ color: 0xfed7aa, roughness: 0.4 })
+    );
+    seatedHead.position.set(0, 0.72, 0);
+    seatedCust.add(seatedHead);
+    tableGroup1.add(seatedCust);
+
+    scene.add(tableGroup1);
+
+    // Bộ 2: Phía sau bên phải
+    const tableGroup2 = new THREE.Group();
+    tableGroup2.position.set(2.4, 0, -0.6);
+    const tableTop2 = new THREE.Mesh(tableTopGeo, tableMat);
+    tableTop2.position.set(0, 0.75, 0);
+    tableGroup2.add(tableTop2);
+    const tableLeg2 = new THREE.Mesh(tableLegGeo, tableMat);
+    tableLeg2.position.set(0, 0.365, 0);
+    tableGroup2.add(tableLeg2);
+    scene.add(tableGroup2);
+
     // Kệ gỗ gắn tường phía sau
     const shelfGeo = new THREE.BoxGeometry(4.5, 0.1, 0.6);
     const shelfMat = new THREE.MeshStandardMaterial({ color: 0x5a2d12, roughness: 0.5 });
@@ -152,6 +294,26 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
     counterTop.castShadow = true;
     counterTop.receiveShadow = true;
     counterGroup.add(counterTop);
+
+    // Quầy thu ngân POS tích hợp mã QR thanh toán trên mặt bàn
+    const posGroup = new THREE.Group();
+    posGroup.position.set(0.35, 1.23, 0.28);
+    // Màn hình POS nghiêng
+    const posScreen = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18, 0.14, 0.03),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2 })
+    );
+    posScreen.rotation.x = -Math.PI / 6;
+    posScreen.position.set(0, 0.1, 0);
+    posGroup.add(posScreen);
+    // Bảng đứng mã QR mini
+    const qrStand = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.08, 0.015),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 })
+    );
+    qrStand.position.set(0.15, 0.04, 0);
+    posGroup.add(qrStand);
+    counterGroup.add(posGroup);
 
     scene.add(counterGroup);
 
@@ -535,6 +697,81 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
     tipJarGroup.add(tipJarBody);
     scene.add(tipJarGroup);
 
+    // 11.2. HỆ THỐNG KHÓI ĐEN SỰ CỐ MÁY PHA (THE BREAKDOWN SMOKE)
+    const smokeCount = 35;
+    const smokeGeo = new THREE.BufferGeometry();
+    const smokePositions = new Float32Array(smokeCount * 3);
+    for (let i = 0; i < smokeCount; i++) {
+      smokePositions[i * 3 + 0] = -1.0 + (Math.random() - 0.5) * 0.4;
+      smokePositions[i * 3 + 1] = 1.4 + Math.random() * 0.8;
+      smokePositions[i * 3 + 2] = 0.25 + (Math.random() - 0.5) * 0.4;
+    }
+    smokeGeo.setAttribute('position', new THREE.BufferAttribute(smokePositions, 3));
+    const smokeMat = new THREE.PointsMaterial({
+      color: 0x18181b,
+      size: 0.16,
+      transparent: true,
+      opacity: 0.75,
+    });
+    const blackSmokePoints = new THREE.Points(smokeGeo, smokeMat);
+    blackSmokePoints.visible = false;
+    scene.add(blackSmokePoints);
+
+    // 11.3. CỜ LÊ SỬA CHỮA KHẨN CẤP (WRENCH REPAIR TOOL)
+    const wrenchGroup = new THREE.Group();
+    wrenchGroup.position.set(-0.85, 1.4, 0.35);
+    const wrenchShaft = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.015, 0.015, 0.28, 8),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 })
+    );
+    wrenchShaft.rotation.z = Math.PI / 4;
+    wrenchGroup.add(wrenchShaft);
+    const wrenchHead = new THREE.Mesh(
+      new THREE.TorusGeometry(0.04, 0.012, 8, 12),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 })
+    );
+    wrenchHead.position.set(0.1, 0.1, 0);
+    wrenchGroup.add(wrenchHead);
+    wrenchGroup.visible = false;
+    scene.add(wrenchGroup);
+
+    // 11.4. KÉT SẮT VÀNG & PHÁO HOA ĂN MỪNG MỐC 100M VND
+    const safeGroup = new THREE.Group();
+    safeGroup.position.set(1.15, 1.35, 0.15);
+    const safeBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.28, 0.28, 0.28),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85, roughness: 0.25 })
+    );
+    safeGroup.add(safeBody);
+    const safeDial = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.05, 0.02, 16),
+      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.1 })
+    );
+    safeDial.rotation.x = Math.PI / 2;
+    safeDial.position.set(0, 0, 0.15);
+    safeGroup.add(safeDial);
+    safeGroup.visible = false;
+    scene.add(safeGroup);
+
+    const fireworksCount = 60;
+    const fireworksGeo = new THREE.BufferGeometry();
+    const fireworksPositions = new Float32Array(fireworksCount * 3);
+    for (let i = 0; i < fireworksCount; i++) {
+      fireworksPositions[i * 3 + 0] = (Math.random() - 0.5) * 3.0;
+      fireworksPositions[i * 3 + 1] = 0.5 + Math.random() * 2.5;
+      fireworksPositions[i * 3 + 2] = (Math.random() - 0.5) * 2.0;
+    }
+    fireworksGeo.setAttribute('position', new THREE.BufferAttribute(fireworksPositions, 3));
+    const fireworksMat = new THREE.PointsMaterial({
+      color: 0xfacc15,
+      size: 0.08,
+      transparent: true,
+      opacity: 0.9,
+    });
+    const fireworksPoints = new THREE.Points(fireworksGeo, fireworksMat);
+    fireworksPoints.visible = false;
+    scene.add(fireworksPoints);
+
     // 12. ANIMATION TICK RENDER LOOP (60 FPS)
     let animationFrameId: number;
     let clock = new THREE.Clock();
@@ -577,6 +814,27 @@ export const CoffeeShop3DView: React.FC<CoffeeShop3DViewProps> = ({
       }
 
       // C. Khách Hàng Animation Actions
+      const { isBreakdown, isRepairing, celebrate100M } = actionsRef.current;
+      
+      // Update Breakdown Smoke & Wrench
+      blackSmokePoints.visible = isBreakdown;
+      wrenchGroup.visible = isRepairing;
+      if (isRepairing) {
+        wrenchGroup.rotation.z = Math.sin(elapsedTime * 14) * 0.4;
+      }
+
+      // Update 100M Celebration
+      safeGroup.visible = celebrate100M;
+      fireworksPoints.visible = celebrate100M;
+      if (celebrate100M) {
+        const fPos = fireworksGeo.attributes.position.array as Float32Array;
+        for (let i = 0; i < fireworksCount; i++) {
+          fPos[i * 3 + 1] += 0.03;
+          if (fPos[i * 3 + 1] > 3.5) fPos[i * 3 + 1] = 0.5;
+        }
+        fireworksGeo.attributes.position.needsUpdate = true;
+      }
+
       if (cAction === 'delighted') {
         // Nhảy cẫng lên và tim 3D xuất hiện
         customerGroup.position.y = Math.abs(Math.sin(elapsedTime * 7)) * 0.18;

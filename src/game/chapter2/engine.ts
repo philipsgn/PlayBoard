@@ -242,6 +242,17 @@ export function createCoffeeShopGame(
       pastryCabinet: false,
       ambianceLighting: false,
     },
+    metrics: {
+      quality: 75,
+      speed: 70,
+      capacity: 50,
+      satisfaction: 70,
+    },
+    targetWealthGoal: 100_000_000,
+    emergencyFundBuffer: 10_000_000,
+    reachedMilestones: [],
+    breakdownActive: false,
+    wrenchRepairActive: false,
     monthRestockSpent: 0,
     monthUpgradeSpent: 0,
     workShiftOrders: [],
@@ -712,5 +723,127 @@ export function completeDrinkOrder(
     workShiftTips: (state.workShiftTips || 0) + actualTip,
     workShiftCompleted: isFinished,
     phase: isFinished ? 'monthly_settlement' : 'work_shift_3d',
+  };
+}
+
+// ==========================================
+// F. COFFEE & WEALTH 100M: MILESTONES & THE BREAKDOWN
+// ==========================================
+
+export const WEALTH_MILESTONES = [25_000_000, 50_000_000, 75_000_000, 100_000_000];
+
+/**
+ * Tính tổng tài sản ròng thực tế của quán (Tiền mặt lưu động + Giá trị máy móc thiết bị).
+ */
+export function calculateNetWealth(state: CoffeeShopState): number {
+  return Math.round(state.cash + state.equipmentValue);
+}
+
+/**
+ * Kiểm tra các mốc Milestone tài sản ròng mới chạm được (25M, 50M, 75M, 100M).
+ */
+export function checkMilestoneUnlocks(state: CoffeeShopState): {
+  nextState: CoffeeShopState;
+  newlyReached: number[];
+} {
+  const currentWealth = calculateNetWealth(state);
+  const previouslyReached = new Set(state.reachedMilestones || []);
+  const newlyReached: number[] = [];
+
+  for (const m of WEALTH_MILESTONES) {
+    if (currentWealth >= m && !previouslyReached.has(m)) {
+      newlyReached.push(m);
+      previouslyReached.add(m);
+    }
+  }
+
+  return {
+    nextState: {
+      ...state,
+      reachedMilestones: Array.from(previouslyReached),
+    },
+    newlyReached,
+  };
+}
+
+/**
+ * Kích hoạt Thử thách Hư Hỏng Thiết Bị 3D (The Breakdown).
+ */
+export function triggerBreakdown(state: CoffeeShopState): CoffeeShopState {
+  return {
+    ...state,
+    breakdownActive: true,
+    wrenchRepairActive: false,
+    metrics: {
+      ...state.metrics,
+      speed: Math.max(10, state.metrics.speed - 20),
+    },
+  };
+}
+
+/**
+ * Xử lý Lựa chọn Thử thách The Breakdown theo Infographic:
+ * - A: Sửa chữa khẩn cấp (Chi phí vừa, cầm cờ lê vặn ốc, khói đen giảm)
+ * - B: Thay mới hoàn toàn (Chi phí cao, máy inox bóng loáng, khách vỗ tay)
+ * - C: Tự mày mò sửa (Tiết kiệm nhưng mất thời gian, khách bỏ đi)
+ */
+export function resolveBreakdownChallenge(
+  state: CoffeeShopState,
+  optionId: 'A' | 'B' | 'C'
+): CoffeeShopState {
+  if (!state.breakdownActive) return state;
+
+  if (optionId === 'A') {
+    // Sửa khẩn cấp 3M VND
+    const cost = 3_000_000;
+    return {
+      ...state,
+      cash: Math.max(0, state.cash - cost),
+      breakdownActive: false,
+      wrenchRepairActive: true,
+      metrics: {
+        ...state.metrics,
+        quality: Math.max(20, state.metrics.quality - 5),
+        speed: Math.min(100, state.metrics.speed + 15),
+      },
+    };
+  }
+
+  if (optionId === 'B') {
+    // Thay máy mới 20M VND (Nâng cấp máy pha Inox xịn)
+    const cost = 20_000_000;
+    return {
+      ...state,
+      cash: Math.max(0, state.cash - cost),
+      equipmentValue: state.equipmentValue + cost,
+      breakdownActive: false,
+      wrenchRepairActive: false,
+      equipment: {
+        ...state.equipment,
+        espressoMachineLevel: Math.max(state.equipment.espressoMachineLevel, 2) as 2 | 3,
+      },
+      metrics: {
+        ...state.metrics,
+        quality: Math.min(100, state.metrics.quality + 20),
+        speed: Math.min(100, state.metrics.speed + 25),
+        satisfaction: Math.min(100, state.metrics.satisfaction + 15),
+      },
+      customerSatisfaction: Math.min(100, state.customerSatisfaction + 15),
+    };
+  }
+
+  // Option C: Tự sửa (Chi phí 500k, mất khách)
+  return {
+    ...state,
+    cash: Math.max(0, state.cash - 500_000),
+    breakdownActive: false,
+    wrenchRepairActive: false,
+    dailyCupsSold: Math.max(5, state.dailyCupsSold - 10),
+    metrics: {
+      ...state.metrics,
+      speed: Math.max(20, state.metrics.speed - 10),
+      satisfaction: Math.max(20, state.metrics.satisfaction - 20),
+    },
+    customerSatisfaction: Math.max(20, state.customerSatisfaction - 15),
   };
 }

@@ -85,17 +85,17 @@ Mọi Tác nhân AI khi tham gia phát triển dự án PlayBoard phải xác đ
 
 ## 6. BẢNG TIẾN ĐỘ & TRẠNG THÁI HỆ THỐNG THỰC TẾ (LIVING DASHBOARD)
 
-> **Cập nhật lần cuối:** 10/11/2026 · **Kiểm duyệt:** Senior Game Manager Creator 2026
+> **Cập nhật lần cuối:** 11/11/2026 · **Kiểm duyệt:** Senior Game Manager Creator 2026
 
 | Hạng mục hệ thống | Trạng thái hiện tại | Chi tiết kỹ thuật & Chỉ số thực tế |
 | :--- | :---: | :--- |
 | **Commit mới nhất (Remote)** | `637d2e2` | Đã push đồng thời lên cả `codex/b18-compact-financial-ui` và `main` |
-| **Tổng số Unit Tests** | `378 / 378 PASS` | 100% pass (Ch1 360 tests + MasterSession 4 tests + Ch2 Engine 6 tests + Ch2 Crises 4 tests + Ch2 Tycoon 4 tests) |
+| **Tổng số Unit Tests** | `382 / 382 PASS` | 100% pass (Ch1 360 tests + MasterSession 4 tests + Ch2 Engine 6 tests + Ch2 Crises 4 tests + Ch2 Tycoon 4 tests + Ch2 Wealth & 100M Journey 4 tests) |
 | **Kiểm tra UI Mobile** | `8 / 8 PASS` | `scripts/diagnostics/mobile-final-ui.test.ts` pass hoàn toàn |
 | **Web Production Build** | `THÀNH CÔNG` | `npm run build` hoàn tất không cảnh báo lỗi |
-| **Mobile Production Build** | `THÀNH CÔNG` | `npm --prefix mobile_app run build` hoàn tất không lỗi |
+| **Mobile Production Build** | `THÀNH CÔNG` | `npm --prefix mobile_app run build` hoàn tất không lỗi (Code-split tối ưu) |
 | **Chương 1 (B18 Cờ Tỷ Phú)** | `HOÀN THIỆN 100%` | 4 Quý 2026, Vàng bứt phá, đệm tiền 10M, Báo cáo sức khỏe, Danger Zone Heartbeat FX, Holographic 2027 Modals |
-| **Chương 2 (Khởi Nghiệp Cafe)**| `HOÀN THIỆN 100% (HYBRID 3D TYCOON & WORK SHIFT)` | Three.js 3D Viewport biến đổi thời gian thực + Ca Trực 3D Pha Chế 3 Bước Xúc Giác (Order Queue & Serving) + Quản Lý Kho & Nâng Cấp Quầy Bar Tycoon + 12 Cards + 4 Crises + Kẹp Bill Gỗ P&L |
+| **Chương 2 (Khởi Nghiệp Cafe)**| `HOÀN THIỆN 100% (COFFEE & WEALTH 100M JOURNEY)` | Three.js 3D Viewport biến đổi thời gian thực + Ca Trực 3D Pha Chế 3 Bước Xúc Giác + Quản Lý Kho & Nâng Cấp Tycoon + The Breakdown (Khói đen & Sửa cờ lê 3D) + Mốc 100M VND (Két vàng & Pháo hoa 3D) + 4 Chỉ Số Kinh Tế Vận Hành (Quality, Speed, Capacity, Satisfaction) + Quỹ Đệm Khẩn Cấp 10M + Kẹp Bill Gỗ P&L |
 | **Chương 3 (Nhân Chuỗi & Vốn)**| `THIẾT KẾ ĐẦY ĐỦ` | GDD chuỗi & Franchise, Bếp trung tâm, Định giá Cap Table, Sổ tay, Design System |
 | **Hệ thống Tài liệu Kiến trúc** | `HOÀN TẤT` | `SYSTEM_ARCHITECTURE.md`, `AGENTS_SOP.md`, 13 file tại `docs/chapters/` |
 
@@ -106,7 +106,7 @@ Mọi Tác nhân AI khi tham gia phát triển dự án PlayBoard phải xác đ
 Trước khi kết thúc bất kỳ lượt nâng cấp nào hoặc tạo commit mới, Agent bắt buộc phải chạy 4 lệnh kiểm tra sau và đảm bảo **100% PASS**:
 
 ```sh
-npm test                                                                        # 378 Unit tests engine (Bắt buộc 100% pass)
+npm test                                                                        # 382 Unit tests engine (Bắt buộc 100% pass)
 node --experimental-strip-types --test scripts/diagnostics/mobile-final-ui.test.ts # Kiểm tra hợp đồng UI Mobile (8 tests pass)
 npm run build                                                                   # Build web production bundle
 npm --prefix mobile_app run build                                               # Build mobile production bundle
