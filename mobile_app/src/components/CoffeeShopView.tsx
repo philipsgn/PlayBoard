@@ -36,6 +36,10 @@ import {
 import { CoffeeInventoryShopModal } from './CoffeeInventoryShopModal.tsx';
 import { CoffeeWorkShift3DOverlay } from './CoffeeWorkShift3DOverlay.tsx';
 
+const Dynamic3DWorld = React.lazy(() =>
+  import('../features/stage3d/world/Dynamic3DWorld').then((m) => ({ default: m.Dynamic3DWorld }))
+);
+
 interface CoffeeShopViewProps {
   onBackToMap: () => void;
   onOpenHelp?: () => void;
@@ -60,6 +64,7 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
   const [isInventoryShopOpen, setIsInventoryShopOpen] = useState(false);
   const [wrenchRepairActive, setWrenchRepairActive] = useState(false);
   const [celebrate100M, setCelebrate100M] = useState(false);
+  const [dynamicWorldOpen, setDynamicWorldOpen] = useState(false);
   const [particleText, setParticleText] = useState<{ id: number; text: string; color: string } | null>(null);
 
   const triggerParticle = (text: string, color: string = '#34D399') => {
@@ -572,6 +577,29 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
             </span>
           </button>
 
+          <button
+            onClick={() => {
+              sound.playClick();
+              setDynamicWorldOpen(true);
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              border: '1.5px solid #a7f3d0',
+              borderRadius: '999px',
+              padding: '4px 12px',
+              color: '#ffffff',
+              fontSize: '11px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.4)',
+            }}
+          >
+            <span>☀️ NẮNG SỚM 3D</span>
+          </button>
+
           <div style={{ fontSize: '10.5px', color: '#fcd34d', fontWeight: 700 }}>
             ☕ {game.inventory.beansRobustaKg + game.inventory.beansArabicaKg}kg Hạt • 🥛 {game.inventory.condensedMilkCans} Lon Sữa
           </div>
@@ -838,6 +866,16 @@ export const CoffeeShopView: React.FC<CoffeeShopViewProps> = ({
           onUpgrade={handleUpgrade}
           onClose={() => setIsInventoryShopOpen(false)}
         />
+      )}
+
+      {/* 5. THẾ GIỚI 3D ĐỘNG TOÀN CẢNH: NẮNG SỚM & ACTIONS BIỂU DIỄN TÌNH HUỐNG */}
+      {dynamicWorldOpen && (
+        <React.Suspense fallback={null}>
+          <Dynamic3DWorld
+            initialRoutine={game.phase === 'crisis' ? 'crisis' : 'morning'}
+            onClose={() => setDynamicWorldOpen(false)}
+          />
+        </React.Suspense>
       )}
     </div>
   );

@@ -85,7 +85,7 @@ Mọi Tác nhân AI khi tham gia phát triển dự án PlayBoard phải xác đ
 
 ## 6. BẢNG TIẾN ĐỘ & TRẠNG THÁI HỆ THỐNG THỰC TẾ (LIVING DASHBOARD)
 
-> **Cập nhật lần cuối:** 11/11/2026 · **Kiểm duyệt:** Senior Game Manager Creator 2026
+> **Cập nhật lần cuối:** 11/11/2026 · **Kiểm duyệt:** Senior Game Manager Creator 2026 (Phát & Antigravity)
 
 | Hạng mục hệ thống | Trạng thái hiện tại | Chi tiết kỹ thuật & Chỉ số thực tế |
 | :--- | :---: | :--- |
@@ -97,7 +97,8 @@ Mọi Tác nhân AI khi tham gia phát triển dự án PlayBoard phải xác đ
 | **Chương 1 (B18 Cờ Tỷ Phú)** | `HOÀN THIỆN 100% (STAGE 3D L1 HYBRID DIORAMA)` | 4 Quý 2026, Vàng bứt phá, đệm tiền 10M, Báo cáo sức khỏe, Holographic Modals + Stage 3D L1 (Chồng xu tiền mặt, Dây xích nợ, Cờ đích 90M, Ánh sáng 4 vòng) |
 | **Chương 2 (Khởi Nghiệp Cafe)**| `HOÀN THIỆN 100% (COFFEE & WEALTH 100M JOURNEY)` | Three.js 3D Viewport biến đổi thời gian thực + Ca Trực 3D Pha Chế 3 Bước Xúc Giác + Quản Lý Kho & Nâng Cấp Tycoon + The Breakdown (Khói đen & Sửa cờ lê 3D) + Mốc 100M VND (Két vàng & Pháo hoa 3D) + 4 Chỉ Số Kinh Tế Vận Hành (Quality, Speed, Capacity, Satisfaction) + Quỹ Đệm Khẩn Cấp 10M + Kẹp Bill Gỗ P&L |
 | **Chương 3 (Nhân Chuỗi & Vốn)**| `THIẾT KẾ ĐẦY ĐỦ` | GDD chuỗi & Franchise, Bếp trung tâm, Định giá Cap Table, Sổ tay, Design System |
-| **Hệ thống Tài liệu Kiến trúc** | `HOÀN TẤT` | `SYSTEM_ARCHITECTURE.md`, `AGENTS_SOP.md`, `STAGE_3D_DIORAMA.md`, 13 file tại `docs/chapters/` |
+| **Thế Giới 3D Động & Actions (MP 04)** | `HOÀN THIỆN VERTICAL SLICE (PHASE 0, 1, 2, 3)` | Nắng sớm ấm áp 42° + Godray + Bụi nắng lơ lửng + Cây xanh biophilic (Monstera, trầu bà rủ) + Cửa mở xoay bản lề 90° thật + Biển hiệu ĐÓNG/MỞ 2 mặt xoay + Tường trước bán trong suốt (cutaway) không che khuất + Camera Director 4 góc nhìn lerp mượt + Nhân vật Minh sơ mi xắn tay, tạp dề nâu, tay cầm prop (điện thoại, cốc, chìa khóa, cờ lê, giẻ lau, cọc tiền) + Diễn kịch bản mở quán sáng & khủng hoảng Reviewer 1 Sao A/B/C với nút x2 tốc độ & Bỏ qua. |
+| **Hệ thống Tài liệu Kiến trúc** | `HOÀN TẤT` | `SYSTEM_ARCHITECTURE.md`, `AGENTS_SOP.md`, `STAGE_3D_DIORAMA.md`, 13 file tại `docs/chapters/`, 7 file thiết kế tại `app_ui_docs/3d_actions/` |
 
 ---
 

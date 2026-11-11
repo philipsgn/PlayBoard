@@ -33,6 +33,7 @@ import { hasSeenTutorial } from './game/onboarding'
 import { MapScreen } from './components/MapScreen'
 import type { MapNodeConfig } from './game/map-progress'
 const CoffeeShopView = lazy(() => import('./components/CoffeeShopView').then(m => ({ default: m.CoffeeShopView })))
+const Dynamic3DWorld = lazy(() => import('./features/stage3d/world/Dynamic3DWorld').then(m => ({ default: m.Dynamic3DWorld })))
 import { loadMasterProfile, recordChapter1Victory } from '../../src/game/master-session'
 
 // Coordinates are artwork metadata; category/order/labels come from the official C20 or B18 board.
@@ -62,6 +63,7 @@ export function GameExperience({ session, onRestart, onHome, onHelp, helpOpen = 
   const [particles, setParticles] = useState<MoneyParticle[]>([])
   const [diceSealValue, setDiceSealValue] = useState<number | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [world3DOpen, setWorld3DOpen] = useState(false)
   const busy = useRef(false)
   const generation = useRef(0)
   const particleId = useRef(0)
@@ -217,6 +219,30 @@ export function GameExperience({ session, onRestart, onHome, onHelp, helpOpen = 
               onToggleMute={toggleMute}
               onOpenSettings={() => setSettingsOpen(true)}
             />
+            <button
+              onClick={() => setWorld3DOpen(true)}
+              style={{
+                position: 'absolute',
+                top: '76px',
+                right: '12px',
+                zIndex: 35,
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                border: '1.5px solid #fef3c7',
+                borderRadius: '999px',
+                padding: '5px 12px',
+                color: '#ffffff',
+                fontSize: '11px',
+                fontWeight: 900,
+                boxShadow: '0 4px 12px rgba(217, 119, 6, 0.45)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <span>☀️</span>
+              <span>THẾ GIỚI 3D LIVE</span>
+            </button>
             <BottomControls
               onRollClick={rollDice}
               disabled={disabled}
@@ -326,6 +352,12 @@ export function GameExperience({ session, onRestart, onHome, onHelp, helpOpen = 
         <Modal title="Không thể thực hiện" onClose={() => setNotice('')}>
           <p role="alert">{localizeNarrative(notice)}</p>
         </Modal>
+      )}
+
+      {world3DOpen && (
+        <Suspense fallback={null}>
+          <Dynamic3DWorld onClose={() => setWorld3DOpen(false)} />
+        </Suspense>
       )}
     </>
   )

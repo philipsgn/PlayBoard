@@ -37,3 +37,4 @@ app_ui_docs/
 *.tsbuildinfo
 
 scratch/
+.cursor/
