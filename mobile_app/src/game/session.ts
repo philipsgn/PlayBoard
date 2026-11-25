@@ -1,7 +1,9 @@
 import { advance, decide, fundPayment, roll, transact } from '../../../src/game/engine.ts'
-import { createPlayerGame, createMultiCourseGame } from '../../../src/game/new-game.ts'
+import { createPlayerGame, createMultiCourseGame, createChapterBoardGame } from '../../../src/game/new-game.ts'
 import { boardFor } from '../../../src/data/board.ts'
 import type { BondRulesVersion, FundingSource, GameState, LivingExpenseRulesVersion, Phase, RebalanceAction, Term } from '../../../src/game/types.ts'
+
+export { createChapterBoardGame }
 
 // Presentation mapping only. Every transition and financial value belongs to src/game.
 export const PHASE_UI: Record<Phase, string> = {

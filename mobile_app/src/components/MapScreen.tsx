@@ -67,33 +67,32 @@ export const MapScreen: React.FC<MapScreenProps> = ({
 
   const getNodeStatus = (node: MapNodeConfig): 'completed' | 'active' | 'locked' => {
     const profile = loadMasterProfile();
-    if (node.stageNumber === 1) {
+    if (node.chapterId === 1) {
       return profile.unlockedChapters.chapter2 ? 'completed' : 'active';
     }
-    if (node.stageNumber === 2) {
+    if (node.chapterId === 2) {
+      if (profile.unlockedChapters.chapter3) return 'completed';
       return profile.unlockedChapters.chapter2 ? 'active' : 'locked';
     }
-    if (node.stageNumber === 3) {
+    if (node.chapterId === 3) {
+      if (profile.chapter3Victory) return 'completed';
       return profile.unlockedChapters.chapter3 ? 'active' : 'locked';
     }
     return 'locked';
   };
 
-  // Chạm trực tiếp vào Node: Nếu active/completed -> vào thẳng ván game ngay lập tức!
+  // Chạm trực tiếp vào Node: Nếu active/completed -> vào thẳng ván bàn cờ chương tương ứng!
   const handleNodeClick = (node: MapNodeConfig) => {
     const status = getNodeStatus(node);
     sound.playClick();
     if (status === 'locked') {
-      if (node.stageNumber === 2) {
-        showToast('Cần tích lũy ≥ 90M VND ở Chương 1 để mở khóa Chương 2!');
-      } else if (node.stageNumber === 3) {
-        showToast('Cần đạt điểm hòa vốn ở Chương 2 để mở khóa Chương 3!');
-      } else {
-        showToast(`Chương ${node.stageNumber}: Đang phát triển!`);
+      if (node.chapterId === 2) {
+        showToast('Cần huy động hợp lệ ≥ 90M VND ở Chương 1 để mở khóa Chương 2!');
+      } else if (node.chapterId === 3) {
+        showToast('Cần huy động hợp lệ ≥ 180M VND ở Chương 2 để mở khóa Chương 3!');
       }
       return;
     }
-    // Chạm Node mở là vào thẳng game loop, không qua popup trung gian
     onPlayNode(node);
   };
 
@@ -315,38 +314,58 @@ export const MapScreen: React.FC<MapScreenProps> = ({
                   )}
                 </div>
 
-                {/* Badge trạng thái "Đang cập nhật" dưới Node bị khóa */}
-                {isLocked && (
-                  <div
+                {/* Nhãn thông tin Chương & Mục tiêu dưới mỗi Đảo */}
+                <div
+                  style={{
+                    marginTop: '6px',
+                    background: 'rgba(15, 23, 42, 0.90)',
+                    border: isActive
+                      ? '1.5px solid rgba(34, 197, 94, 0.7)'
+                      : isCompleted
+                        ? '1.5px solid rgba(245, 158, 11, 0.7)'
+                        : '1.5px solid rgba(148, 163, 184, 0.35)',
+                    padding: '4px 12px',
+                    borderRadius: '14px',
+                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.65)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backdropFilter: 'blur(4px)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <span
                     style={{
-                      marginTop: '6px',
-                      background: 'rgba(15, 23, 42, 0.88)',
-                      border: '1.5px solid rgba(148, 163, 184, 0.3)',
-                      padding: '3px 14px',
-                      borderRadius: '14px',
-                      boxShadow: '0 4px 10px rgba(0, 0, 0, 0.6)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backdropFilter: 'blur(4px)',
-                      pointerEvents: 'none',
+                      fontSize: '12.5px',
+                      fontWeight: 900,
+                      color: isLocked ? '#cbd5e1' : '#fef3c7',
+                      letterSpacing: '0.3px',
+                      lineHeight: 1.2,
+                      whiteSpace: 'nowrap',
+                      fontFamily: "'Fredoka', sans-serif",
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: '12px',
-                        fontWeight: 800,
-                        color: '#fbbf24',
-                        letterSpacing: '0.4px',
-                        lineHeight: 1.2,
-                        whiteSpace: 'nowrap',
-                        fontFamily: "'Fredoka', sans-serif",
-                      }}
-                    >
-                      Đang cập nhật
-                    </span>
-                  </div>
-                )}
+                    {node.title}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '10.5px',
+                      fontWeight: 800,
+                      color: isLocked ? '#fbbf24' : '#38bdf8',
+                      letterSpacing: '0.2px',
+                      lineHeight: 1.2,
+                      whiteSpace: 'nowrap',
+                      fontFamily: "'Fredoka', sans-serif",
+                    }}
+                  >
+                    {isLocked
+                      ? node.chapterId === 2
+                        ? 'Cần thắng Chương 1 (≥ 90M)'
+                        : 'Cần thắng Chương 2 (≥ 180M)'
+                      : node.subtitle}
+                  </span>
+                </div>
               </div>
             );
           })}

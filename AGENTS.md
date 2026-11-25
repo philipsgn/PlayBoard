@@ -1,114 +1,94 @@
-# AGENTS.md — Hướng Dẫn Tác Nhân AI: PlayBoard (Hệ Thống 3 Chương & Chuẩn Mực Phát Triển 2026)
+# AGENTS.md — Hướng Dẫn Tác Nhân AI: PlayBoard (Cờ Tỷ Phú Đầu Tư Tài Chính 3 Chương & Hệ Sinh Thái Gemini 4)
 
-Tài liệu này là **nguồn chân lý tối cao (Single Source of Truth)** định nghĩa vai trò, ranh giới, kiến trúc hệ thống, quy chuẩn giao việc và bảng theo dõi tiến độ dành cho toàn bộ các Agent (AI Assistant / Codex / Antigravity / Worker Agents) làm việc cùng **Phát (Owner & Lead Game Developer / Kiến Trúc Sư Trưởng)** trong dự án độc lập **PlayBoard**.
+Tài liệu này là **nguồn chân lý tối cao (Single Source of Truth)** định nghĩa vai trò, ranh giới kiến trúc, hệ thống thử thách tài chính, ma trận điều phối Model (Gemini 4 Series) và quy chuẩn cổng chất lượng dành cho toàn bộ các Agent (Antigravity / Subagents / Workflow Workers) làm việc cùng **Phát (Owner & Lead Game Developer / Kiến Trúc Sư Trưởng)** trong dự án độc lập **PlayBoard**.
 
 ---
 
 ## 1. Bối Cảnh Dự Án & Quyền Sở Hữu Độc Lập
 
-- **Dự án:** **PlayBoard** (`https://github.com/philipsgn/PlayBoard.git`) — Hệ sinh thái game giáo dục tài chính thực chiến đa chương trình:
-  - **Chương 1 (PlayBoard Cờ Tỷ Phú B18):** Bàn cờ tài chính cá nhân 18 ô (Tiền mặt, Tiết kiệm, Cổ phiếu, Trái phiếu, Vàng, Tiệm F&B, Nợ). Tích lũy vốn $\ge 90\text{M VND}$ qua 4 vòng (4 Quý năm 2026).
-  - **Chương 2 (Khởi Nghiệp Chủ Quán Cà Phê):** Mô phỏng vận hành kinh doanh F&B thực tế (vượt qua 3 tháng đầu sóng gió, quản trị định phí & biến phí, bảo toàn Runway tiền mặt, đạt điểm hòa vốn Break-even).
-  - **Chương 3 (Mở Rộng Chuỗi & Nhượng Quyền):** Nhân bản 3–5 cửa hàng, mô hình nhượng quyền Franchise (Franchise fee & Royalty), Bếp trung tâm (Central Kitchen) và gọi vốn Thiên thần (Angel Round) định giá 5 Tỷ Đồng.
+- **Dự án:** **PlayBoard** (`https://github.com/philipsgn/PlayBoard.git`) — Game Bàn Cờ Tỷ Phú Tích Hợp Đầu Tư Tài Chính Thực Chiến 3 Chương:
+  - **Chương 1 — Khởi Đầu Tích Lũy (`50M → 90M VND`, 4 Vòng = 4 Quý):** Bàn cờ 18 ô (`B18`), quản lý 5 kênh tài sản (Tiền mặt, Tiết kiệm kỳ hạn, Cổ phiếu 3 ngành, Trái phiếu tín dụng V2.5, Vàng trú ẩn, Tiệm kinh doanh), giữ kỷ luật đệm khẩn cấp `10.000.000 VND`.
+  - **Chương 2 — Đòn Bẩy Tăng Trưởng (`90M+ → 180M VND`, 4 Vòng):** Kế thừa vốn thặng dư có trần (`Capped Carryover ≤ +15M`), đối mặt **Lạm phát sinh hoạt phí lũy tiến** (`+1M/vòng`), quy mô biến cố `1.5x` và **Thẻ Tình Huống Hệ Quả Trễ (Delayed Consequence Dilemmas)** (Bảo hiểm Phòng vệ vs. Rủi ro biến cố; Cắt giảm chi phí ngắn hạn vs. Sụt giảm 35% dòng tiền kinh doanh kỳ sau).
+  - **Chương 3 — Bão Vĩ Mô & Tự Do Tài Chính (`180M+ → 360M VND`, 5 Vòng chu kỳ kinh tế):** Kế thừa vốn thặng dư có trần (`Capped Carryover ≤ +30M`), mở hạn mức vay đòn bẩy `120.000.000 VND` kèm **Cơ chế Call Margin Cưỡng Chế** (tự động thanh lý Cổ phiếu/Vàng chịu phạt `5%` khi tỷ lệ `Nợ / Tài sản đảm bảo thanh khoản > 60%`).
+- **Loại bỏ hoàn toàn:** Toàn bộ màn game *Quản lý pha cà phê (Coffee Shop Simulator / Cafe3D)* đã được gỡ bỏ vĩnh viễn để tập trung 100% chiều sâu vào lõi **Cờ Tỷ Phú Đầu Tư Tài Chính**.
 - **Chủ sở hữu & Kiến trúc sư trưởng:** **Phát (Owner & Lead Game Developer)**.
 - **Ranh giới quyền hạn:** **100% FULL READ/WRITE TRÊN TOÀN BỘ CODEBASE**.
-  - Không còn bất kỳ ràng buộc read-only nào với nhóm cũ.
-  - Được phép trực tiếp nâng cấp, tái cấu trúc logic game engine (`src/game/**`), data (`src/data/**`), giao diện mobile (`mobile_app/**`), và các chương trình mini-game mới.
-- **Nhánh làm việc chính:** `main` trên remote `origin` (`https://github.com/philipsgn/PlayBoard.git`). Nhánh tính năng: `codex/b18-compact-financial-ui`.
 
 ---
 
-## 2. Chuẩn Thiết Kế & Trải Nghiệm Người Chơi
+## 2. Chuẩn Thiết Kế, Đồ Họa & Trải Nghiệm Người Chơi
 
-1. **Thiết kế Mobile-First:** Canvas chuẩn 1080 × 2400 px, tỷ lệ 9:20 / 20:9, tối ưu công thái học một ngón tay cái.
+1. **Thiết kế Mobile-First:** Canvas chuẩn `1080 × 2400 px` (Board viewport `940 × 1672 px`), tỷ lệ 9:20 / 20:9, tối ưu thao tác một ngón tay cái.
 2. **Phông chữ chủ đạo:** **Fredoka** (Medium 500, SemiBold 600, Bold 700) hỗ trợ 100% tiếng Việt có dấu.
-3. **Phong cách thẩm mỹ:** Playful Gamification + Lively Fantasy + Dynamic Emotional Experience.
-4. **Nguyên tắc Tài chính Chân thật (Realistic RL 2026 Rules):**
-   - Số liệu tiền tệ: **VND** chuẩn xác, có dấu chấm phân cách hàng nghìn/triệu rõ ràng (ví dụ: `90.000.000 VND`).
-   - Mọi công thức kinh tế (Doanh thu, Chi phí cố định, Chi phí biến đổi, Lợi nhuận ròng, Điểm hòa vốn, Runway tiền mặt, Cap Table) phản ánh đúng thực tế kinh doanh Việt Nam năm 2026 để người chơi học hỏi tư duy quản trị tài chính thực thụ.
+3. **Phong cách Đồ họa 2.5D Hybrid Isometric Diorama + Tactile Financial UI:**
+   - Mặt bàn cờ Isometric 2.5D sắc nét kết hợp Nhân vật 3D (`Character3D.tsx`), Xúc xắc 3D (`Dice3D.tsx`) và lớp Diorama 3D bán trong suốt (`ChapterStage.tsx` hiển thị Chồng xu tiền mặt, Xích nợ cảnh báo, Cờ đích và Ánh sáng môi trường `LightingRig` theo vòng & chương).
+   - Giao diện thẻ quyết định Holographic, Cảnh báo nhịp tim đỏ khi thủng đệm tiền mặt (`.danger-zone-vignette`), và bảng phân tích AI Coach cuối màn.
+4. **Nguyên tắc Tài chính Chân thật (Zero Float Drift):**
+   - Mọi số liệu tiền tệ là **số nguyên VND** (`Math.round()` / `Math.floor()`), phân cách dấu chấm rõ ràng (`90.000.000 ₫`).
+   - Chiến thắng xét trên **Nguồn Huy Động Hợp Lệ (`lawfulProceeds` / `liquidatableFunds`)** sau khi trừ phí bán, chênh lệch giá vàng (`3%`), nợ gốc + lãi vay (`10%/vòng`), và không tính Tiệm kinh doanh chưa thanh lý hoặc lãi tiết kiệm chưa đáo hạn.
 
 ---
 
-## 3. Kiến Trúc 3 Chương Chơi
+## 3. Kiến Trúc 3 Chương Bàn Cờ & 6 Bẫy Tài Chính Cốt Lõi
 
 ```mermaid
 flowchart LR
-    CH1["CHƯƠNG 1: CỜ TỶ PHÚ TÀI CHÍNH<br/>(Vốn 50M -> Mục tiêu ≥ 90M VND)"] -->|Chuyển 90M Vốn Khởi Nghiệp| CH2["CHƯƠNG 2: KHỞI NGHIỆP QUÁN CÀ PHÊ<br/>(3 Tháng Vượt Điểm Hòa Vốn)"]
-    CH2 -->|Dòng Tiền Thặng Dư & Uy Tín| CH3["CHƯƠNG 3: MỞ RỘNG CHUỖI & NHƯỢNG QUYỀN<br/>(3-5 Cửa Hàng & Gọi Vốn 5 Tỷ)"]
+    CH1["CHƯƠNG 1: KHỞI ĐẦU TÍCH LŨY<br/>(Vốn 50M -> Đích ≥ 90M VND · 4 Vòng)"] -->|Capped Carryover ≤ +15M| CH2["CHƯƠNG 2: ĐÒN BẨY TĂNG TRƯỞNG<br/>(Vốn 90M-105M -> Đích ≥ 180M VND · 4 Vòng)"]
+    CH2 -->|Capped Carryover ≤ +30M| CH3["CHƯƠNG 3: BÃO VĨ MÔ & TỰ DO TÀI CHÍNH<br/>(Vốn 180M-210M -> Đích ≥ 360M VND · 5 Vòng)"]
 ```
 
-1. **Chương 1 — Cờ Tỷ Phú Tài Chính (PlayBoard B18):**
-   - 4 vòng cờ tương ứng 4 Quý năm 2026 (Q1 Tăng trưởng AI, Q2 Sóng Vàng phá đỉnh, Q3 Bất định & đệm an toàn, Q4 Về đích 90M).
-   - Xúc xắc 1-6 mặt, quản lý 5 kênh tài sản (Tiền mặt, Tiết kiệm, Cổ phiếu, Trái phiếu, Vàng, Tiệm kinh doanh).
-   - **Quy chuẩn đệm an toàn:** `SAFE_EMERGENCY_BUFFER = 10.000.000 VND`.
-   - **Mục tiêu:** Tích lũy tài sản hợp lệ $\ge$ 90M VND để chiến thắng và mang vốn sang Chương 2.
-
-2. **Chương 2 — Khởi Nghiệp Chủ Quán Cà Phê (Coffee Shop Simulator):**
-   - Lối chơi Turn-based theo Thẻ Quyết Định Tình Huống (Decision Cards) và bảng P&L tài chính theo tháng.
-   - Thử thách 3 tháng đầu: Quán chịu lỗ vận hành ban đầu, người chơi phải tính toán bảo toàn vốn lưu động (Runway).
-   - **Mốc chiến thắng:** Đạt điểm hòa vốn (Break-even), giữ quán ổn định sau 3 tháng và có lợi nhuận ròng dương.
-
-3. **Chương 3 — Mở Rộng Chuỗi & Nhượng Quyền (Coffee Chain & Franchise):**
-   - Quản trị quy mô lớn: Nhân bản từ 1 lên 3–5 cửa hàng.
-   - Dòng tiền nhượng quyền: Phí nhượng quyền (100M-150M/điểm) + Phí bản quyền Royalty (3%-5%/tháng) + Biên lãi cung ứng hạt 15%.
-   - Đầu tư Bếp trung tâm (Central Kitchen 120M) giảm giá vốn toàn chuỗi từ 30% xuống 20%.
-   - **Mốc chiến thắng:** Đàm phán thành công Vòng Thiên Thần (Angel Round) định giá công ty $\ge 5$ Tỷ Đồng, Founder giữ $\ge 65\%$ cổ phần.
+### 6 Nhóm Khúc Mắc & Bẫy Tài Chính Buộc Người Chơi Phải Giải Đố:
+1. **Bẫy Thanh Khoản & Phạt Thanh Lý Cưỡng Bức:** Rút tiết kiệm trước hạn mất 100% lãi cả sổ; Tiệm kinh doanh khóa thanh khoản ngoài ô Kinh doanh; Vay nóng chịu lãi phạt 10%/vòng.
+2. **Bẫy Lãi Suất Cao & Vỡ Nợ Trái Phiếu (Credit Risk V2.5):** Trái phiếu *Bứt Phá* trả coupon cao hơn *An Tâm* nhưng dễ bị chậm trả (`delayed`) hoặc vỡ nợ (`defaulted`) khi gặp cú sốc `Tín dụng thắt chặt`.
+3. **Bẫy Thời Điểm Chi Phí Cơ Hội:** Mua khóa học tăng lương hoặc gửi tiết kiệm kỳ hạn 3 vòng quá muộn ở Vòng 3–4 sẽ không kịp thu hồi vốn trước khi kết thúc ván.
+4. **Bẫy FOMO Đu Đỉnh & Đảo Chiều Vĩ Mô:** Tin dự báo đầu vòng có độ bất định; cần phòng vệ chéo (Hedging) giữa Cổ phiếu/Kinh doanh và Vàng/Tiết kiệm.
+5. **Bài Toán Quyết Toán Vòng Cuối (`lawfulProceeds`):** Tiệm kinh doanh chưa bán ở vòng cuối tính bằng `0 VND` thanh khoản hợp lệ.
+6. **Lạm Phát Lũy Tiến, Hệ Quả Trễ & Call Margin (Chương 2 & 3):** Sinh hoạt phí tăng qua mỗi vòng; quyết định cắt giảm bảo trì làm hụt 35% doanh thu vòng sau; tỷ lệ đòn bẩy `Nợ / Tài sản thanh khoản > 60%` kích hoạt **Call Margin cưỡng chế bán tài sản chịu phạt 5%**.
 
 ---
 
-## 4. Master Architecture & Điều Phối Dữ Liệu
+## 4. Ma Trận Phân Bổ Model (Gemini 4 Series) & Hệ Thống 4 Subagents
 
-1. **Điều Phối Trung Tâm (`MasterSessionManager`):**
-   - Mỗi Chương là một module Micro-Engine độc lập (`src/game/chapter1/`, `chapter2/`, `chapter3/`).
-   - `MasterSessionManager` là Single Source of Truth: Quản lý chuyển tiếp thành quả (Carryover 90M), lưu trữ checkpoint (Capacitor Preferences / LocalStorage) và mở khóa màn.
-   - Tham khảo chi tiết: [`docs/SYSTEM_ARCHITECTURE.md`](./docs/SYSTEM_ARCHITECTURE.md).
+### 4.1. Chiến Lược Chọn Model Trong Antigravity
 
-2. **Pipeline Đồ Họa Hybrid 3D (`ThreeSceneManager`):**
-   - **Nửa trên (3D Viewport):** Three.js / `<model-viewer>` render quầy pha cafe bốc khói, sa bàn thành phố 3D Isometric, xúc xắc & nhân vật 3D.
-   - **Nửa dưới (2D Taktile UI):** React 19 hiển thị thẻ bài Polaroid 3D tilt, bảng P&L hóa đơn gỗ retro sắc nét 100%, khóa cứng 60 FPS.
-   - **Quy tắc giải phóng bộ nhớ WebGL:** Bắt buộc `dispose()` toàn bộ Geometry, Material, Texture và WebGLRenderer khi unmount để tránh tràn RAM trên iOS Safari.
+| Nhiệm vụ & Giai đoạn | Model Khuyên Dùng (UI Selector) | Subagent / Workflow Tier (`model`) | Lý do kỹ thuật |
+| :--- | :--- | :--- | :--- |
+| **Lập Kế Hoạch (`/plan`, `/grill-me`) & Điều Phối Đa Tác Nhân (`run_workflow`, `/teamwork`)** | **`Orchestrator (Neon)`** hoặc **`Orchestrator (Carbon)`** | `inherit` / `pro` | Tối ưu cho việc tách nhánh nhiệm vụ, kiểm soát phụ thuộc giữa Engine, UI, 3D và QA. |
+| **Thiết Kế Toán Kinh Tế, State Machine (`src/game/**`), Bẫy Tài Chính & Cân Bằng Xác Suất** | **`Gemini 4 Neon (Medium)`** hoặc **`Gemini 4 Carbon (Medium)`** | `pro` / `inherit` | Năng lực suy luận toán học chính xác tuyệt đối, bảo toàn 100% tính tất định (Deterministic Seed RNG). |
+| **Thực Thi Code UI/CSS (`mobile_app/**`), Refactor Component, Viết Unit Tests** | **`Gemini 4 Hydrogen (Medium)`** | `flash` / `inherit` | Thế hệ Gemini 4 tốc độ cao, thực thi code nhanh và tiết kiệm quota khi đã có spec rõ ràng. |
+| **Kiểm Tra Chính Tả Tiếng Việt, Quét File, Chạy Lệnh Test & Build Verification** | **`Gemini 4 Hydrogen (Medium)`** | `flash_lite` / `flash` | Tác vụ kiểm định tự động tốc độ cao. |
 
-3. **Hệ Sinh Thái Tài Liệu Chi Tiết (13 Files):**
-   - Toàn bộ GDD, Sổ tay người chơi, Design System và Tech Architecture của 3 Chương được lưu trữ chuẩn mực tại thư mục: [`docs/chapters/README.md`](./docs/chapters/README.md).
+*(Lưu ý: `Gemini 4 Argon` và `Gemini 3.8 Flash` đang ở trạng thái `Leaving Soon`, chỉ dùng dự phòng khi các model `Neon / Carbon / Hydrogen` quá tải).*
 
----
+### 4.2. Quy Chế 4 Subagents Chuyên Biệt ([`docs/AGENTS_SOP.md`](./docs/AGENTS_SOP.md))
 
-## 5. Quy Chế 4 Vai Trò Agent Worker & SOP
-
-Mọi Tác nhân AI khi tham gia phát triển dự án PlayBoard phải xác định đúng vai trò và tuân thủ quy chuẩn trong [`docs/AGENTS_SOP.md`](./docs/AGENTS_SOP.md):
-1. **Engine Worker (Logic & Toán kinh tế):** Viết logic thuần TypeScript (`src/game/**`), công thức P&L, Break-even, Cap Table, định giá và bộ Unit Tests (`tests/**`); tuyệt đối không import DOM/UI.
-2. **3D Graphics Worker (Three.js & WebGL):** Xây dựng các không gian 3D, tối ưu hóa 60 FPS, bắt buộc dọn dẹp WebGL Context sạch sẽ khi unmount.
-3. **UI/UX Worker (Giao diện Mobile):** Xây dựng component React 19 tối ưu một ngón tay cái (1080 × 2400 px), Typography Fredoka tiếng Việt, bảng P&L gỗ retro và thẻ Polaroid 3D tilt.
-4. **QA Gatekeeper Worker (Người gác cổng chất lượng):** Giữ quyền phủ quyết tuyệt đối; đảm bảo **360/360 bài test pass 100%**, build không lỗi trước khi được phép merge và commit.
+1. **`financial-engine-worker` (Logic & Toán Kinh Tế 3 Chương):** Phụ trách `src/game/**`, `src/data/**`. Thuần TypeScript, số nguyên VND, không import React/DOM/Three.js.
+2. **`board-diorama-3d-worker` (Đồ Họa 2.5D Isometric & Stage3D Diorama):** Phụ trách `mobile_app/src/features/stage3d/**`, `BoardView.tsx`, `Character3D.tsx`, `Dice3D.tsx`. Khóa 60 FPS, bắt buộc `dispose()` WebGL khi unmount.
+3. **`tactile-ui-worker` (Giao Diện Mobile-First & Thẻ Quyết Định):** Phụ trách `mobile_app/src/components/**`, `src/components/**`. Canvas `1080 × 2400 px`, font Fredoka tiếng Việt.
+4. **`qa-gatekeeper-worker` (Người Gác Cổng Chất Lượng):** Quyền phủ quyết tuyệt đối; đảm bảo 100% unit tests + UI diagnostics + Web/Mobile build pass.
 
 ---
 
-## 6. BẢNG TIẾN ĐỘ & TRẠNG THÁI HỆ THỐNG THỰC TẾ (LIVING DASHBOARD)
+## 5. Hệ Thống Rules & Skills Trong `.agents/`
 
-> **Cập nhật lần cuối:** 11/11/2026 · **Kiểm duyệt:** Senior Game Manager Creator 2026 (Phát & Antigravity)
-
-| Hạng mục hệ thống | Trạng thái hiện tại | Chi tiết kỹ thuật & Chỉ số thực tế |
-| :--- | :---: | :--- |
-| **Commit mới nhất (Remote)** | `637d2e2` | Đã push đồng thời lên cả `codex/b18-compact-financial-ui` và `main` |
-| **Tổng số Unit Tests** | `392 / 392 PASS` | 100% pass (Ch1 360 tests + MasterSession 4 tests + Ch2 Engine 6 tests + Ch2 Crises 4 tests + Ch2 Tycoon 4 tests + Ch2 Wealth & 100M 4 tests + Stage3D 4 tests + Cafe3D Solo Domain 6 tests) |
-| **Kiểm tra UI Mobile** | `8 / 8 PASS` | `scripts/diagnostics/mobile-final-ui.test.ts` pass hoàn toàn |
-| **Web Production Build** | `THÀNH CÔNG` | `npm run build` hoàn tất không cảnh báo lỗi |
-| **Mobile Production Build** | `THÀNH CÔNG` | `npm --prefix mobile_app run build` hoàn tất không lỗi (Code-split tối ưu) |
-| **Chương 1 (B18 Cờ Tỷ Phú)** | `HOÀN THIỆN 100% (2.5D HYBRID DIORAMA)` | Bàn cờ 2D rực rỡ sông nước, 4 Quý 2026, Vàng bứt phá, đệm tiền 10M, Báo cáo sức khỏe, Holographic Modals. Gỡ hoàn toàn nút 3D Live và bundle 3D nặng. |
-| **Chương 2 (Khởi Nghiệp Cafe)**| `HOÀN THIỆN 100% (CAFE 3D SOLO GAMIFICATION REALITY)` | Three.js Viewport nhúng sáng ấm phong cách Scandinavian (gỗ sồi, cửa xoay 90°, cây xanh biophilic Monstera, godray 42°) + Nhân vật Minh Barista dân sự (áo sơ mi ngà, tạp dề nâu, gỡ 100% vũ khí/mũ lính, 670KB) + Ca làm việc 1 ngón cái Context HUD (Pha chế, Ghi order, Thu tiền, Dọn bàn, Auto) + Kết nối doanh thu thực tế vào P&L + 3 Venues (main_street, alley, kiosk) + Diễn kịch bản tình huống thực tế (Mở quán, Reviewer 1 Sao A/B/C, The Breakdown). |
-| **Chương 3 (Nhân Chuỗi & Vốn)**| `THIẾT KẾ ĐẦY ĐỦ` | GDD chuỗi & Franchise, Bếp trung tâm, Định giá Cap Table, Sổ tay, Design System |
-| **Thế Giới 3D Động & Actions (MP 04)** | `HOÀN THIỆN VERTICAL SLICE (PHASE 0, 1, 2, 3)` | Nắng sớm ấm áp 42° + Godray + Bụi nắng lơ lửng + Cây xanh biophilic (Monstera, trầu bà rủ) + Cửa mở xoay bản lề 90° thật + Biển hiệu ĐÓNG/MỞ 2 mặt xoay + Tường trước bán trong suốt (cutaway) không che khuất + Camera Director 4 góc nhìn lerp mượt + Nhân vật Minh sơ mi xắn tay, tạp dề nâu, tay cầm prop (điện thoại, cốc, chìa khóa, cờ lê, giẻ lau, cọc tiền) + Diễn kịch bản mở quán sáng & khủng hoảng Reviewer 1 Sao A/B/C với nút x2 tốc độ & Bỏ qua. |
-| **Hệ thống Tài liệu Kiến trúc** | `HOÀN TẤT` | `SYSTEM_ARCHITECTURE.md`, `AGENTS_SOP.md`, `STAGE_3D_DIORAMA.md`, 13 file tại `docs/chapters/`, 7 file thiết kế tại `app_ui_docs/3d_actions/` |
+- **Rules (`.agents/rules/`):**
+  - [`.agents/rules/engine-finance-rules.md`](./.agents/rules/engine-finance-rules.md): Quy tắc toán kinh tế, 3 Chương bàn cờ, Call Margin, Hệ quả trễ & Deterministic RNG.
+  - [`.agents/rules/app-ui-rules.md`](./.agents/rules/app-ui-rules.md): Quy chuẩn Mobile-First 1080×2400, Fredoka, 2.5D Diorama & WebGL Disposal.
+  - [`.agents/rules/ai-coach-rules.md`](./.agents/rules/ai-coach-rules.md): Quy tắc AI Coach grounding theo bằng chứng thực tế của ván cờ.
+  - [`.agents/rules/workflow.md`](./.agents/rules/workflow.md): Quy trình 5 bước Atomic Scope Isolation & Ma trận Model Gemini 4.
+- **Skills (`.agents/skills/`):**
+  - [`.agents/skills/qa-gatekeeper/SKILL.md`](./.agents/skills/qa-gatekeeper/SKILL.md): Runbook chạy 4 cổng kiểm định chất lượng bắt buộc.
+  - [`.agents/skills/financial-balance-sim/SKILL.md`](./.agents/skills/financial-balance-sim/SKILL.md): Runbook kiểm tra cân bằng toán học và tỷ lệ thắng của 3 Chương Bàn Cờ.
 
 ---
 
-## 7. Cổng Kiểm Tra Chất Lượng Tuyệt Đối (Zero-Regression Policy)
+## 6. Cổng Kiểm Tra Chất Lượng Tuyệt Đối (Zero-Regression Policy)
 
 Trước khi kết thúc bất kỳ lượt nâng cấp nào hoặc tạo commit mới, Agent bắt buộc phải chạy 4 lệnh kiểm tra sau và đảm bảo **100% PASS**:
 
 ```sh
-npm test                                                                        # 382 Unit tests engine (Bắt buộc 100% pass)
-node --experimental-strip-types --test scripts/diagnostics/mobile-final-ui.test.ts # Kiểm tra hợp đồng UI Mobile (8 tests pass)
+npm test                                                                        # Toàn bộ Unit tests engine (100% pass)
+node --experimental-strip-types --test scripts/diagnostics/mobile-final-ui.test.ts # Kiểm tra hợp đồng UI Mobile (8/8 pass)
 npm run build                                                                   # Build web production bundle
 npm --prefix mobile_app run build                                               # Build mobile production bundle
 ```

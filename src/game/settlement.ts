@@ -8,6 +8,8 @@ import type { Asset, GameState } from './types.ts'
 import { hasBondCredit, settleCreditBonds } from './bond-credit.ts'
 import { hasPeriodicLiving, livingCostForGame } from './living-expenses.ts'
 import { rulesForGame } from './rules-profile.ts'
+import { getChapterPreset } from '../data/chapter-presets.ts'
+import { evaluateAndExecuteMarginCall } from './chapter-mechanics.ts'
 
 export function beginSettlement(state: GameState): GameState {
   if (state.termination || state.settlement || state.summaries.some(summary => summary.lap === state.lap)) return state
@@ -32,17 +34,28 @@ export function continueSettlement(state: GameState): GameState {
     let livingPaid = 0
     if (step === 0) {
       s = updateNormalMarket(s)
+      if (s.chapterId === 3) {
+        s = evaluateAndExecuteMarginCall(s)
+      }
       const progress = s.settlement!
       const prior = progress.before.portfolio
       for (const asset of ['stocks', 'bonds', 'gold', 'business'] as Asset[]) {
         progress.rates[asset] = prior[asset] > 0 ? s.portfolio[asset] / prior[asset] - 1 : 0
       }
     } else if (step === 1) {
+      const baseSalary = s.chapterId && s.chapterId >= 2
+        ? getChapterPreset(s.chapterId).recurringIncome
+        : rulesForGame(s).recurringIncome
       s.portfolio.cash += s.recurringIncome
-      s.settlement!.lines.push({ label: 'Lương cơ bản tại START', amount: rulesForGame(s).recurringIncome },
-        { label: 'Tăng lương từ khóa học', amount: s.recurringIncome - rulesForGame(s).recurringIncome })
+      s.settlement!.lines.push({ label: 'Lương cơ bản tại START', amount: baseSalary },
+        { label: 'Tăng lương từ khóa học', amount: s.recurringIncome - baseSalary })
     } else if (step === 2) {
-      const income = businessIncome(s)
+      let income = businessIncome(s)
+      if (s.delayedEffects?.businessRevenuePenaltyNextLap && income > 0) {
+        income = Math.round(income * 0.65)
+        s.delayedEffects = { ...s.delayedEffects, businessRevenuePenaltyNextLap: false }
+        s.settlement!.fundingNotes.push('Hệ quả trễ từ cắt giảm bảo trì: Doanh thu kinh doanh kỳ này giảm 35%.')
+      }
       s.settlement!.lines.push({ label: 'Dòng tiền kinh doanh', amount: income })
       if (income >= 0) s.portfolio.cash += income
       else collectPayment(s, { origin: 'settlement', title: 'Lỗ vận hành kinh doanh', total: -income })

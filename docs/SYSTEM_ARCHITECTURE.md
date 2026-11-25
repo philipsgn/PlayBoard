@@ -1,40 +1,38 @@
 # PLAYBOARD: MASTER SYSTEM ARCHITECTURE DOCUMENT (SAD)
-## Kiến Trúc Hệ Thống Tổng Thể Toàn Diện Cho Game App 3 Chương (2026 Edition)
+## Kiến Trúc Hệ Thống Tổng Thể Toàn Diện Cho Game Bàn Cờ Tỷ Phú Đầu Tư Tài Chính 3 Chương
 **Kiến trúc sư trưởng:** Phát (Owner & Lead Game Developer)  
-**Biên soạn & Thiết kế:** Senior Game Manager Creator 2026  
 **Dự án:** PlayBoard (`https://github.com/philipsgn/PlayBoard.git`)  
-**Tiêu chuẩn:** Mobile-First Canvas 1080 × 2400 px · Hybrid 3D Three.js + React 19 · TypeScript 5.6+  
+**Tiêu chuẩn:** Mobile-First Canvas 1080 × 2400 px · 2.5D Hybrid Isometric Diorama (Three.js) + React 19 · TypeScript  
 
 ---
 
 ## 1. TỔNG QUAN KIẾN TRÚC HỆ THỐNG (SYSTEM OVERVIEW)
 
-PlayBoard là ứng dụng game giáo dục tài chính đa chương trình thế hệ mới, vận hành trên nền tảng Mobile Web / PWA và đóng gói Native (Capacitor iOS & Android). Ứng dụng kết hợp giữa logic tính toán kinh tế thực tế chuẩn xác (100% bằng VND) và trải nghiệm thị giác sống động với mô hình **Hybrid 3D Three.js + Taktile 2D UI**.
+PlayBoard là ứng dụng game bàn cờ tỷ phú giáo dục đầu tư tài chính đa cấp độ trên nền tảng Mobile Web / PWA. Ứng dụng kết hợp giữa cỗ máy mô phỏng toán kinh tế tất định (Deterministic Seed RNG, 100% số nguyên VND) và trải nghiệm thị giác **2.5D Hybrid Isometric Diorama + Tactile Financial UI**.
 
 ### 1.1. Sơ Đồ Khối Kiến Trúc Phân Tầng (Layered Architecture)
 
 ```mermaid
 flowchart TD
-    subgraph UI_Layer["1. LỚP GIAO DIỆN & TƯƠNG TÁC (PRESENTATION LAYER)"]
-        Canvas3D["ThreeSceneManager (WebGL / Three.js)<br/>• Quán cafe 3D bốc khói<br/>• Sa bàn đô thị 3D Isometric<br/>• Xúc xắc & Nhân vật 3D (.glb)"]
-        ReactUI["Taktile 2D UI (React 19 + Tailwind)<br/>• Typography Fredoka tiếng Việt<br/>• Thẻ tình huống Polaroid 3D Tilt<br/>• Bảng P&L kẹp gỗ Kraft kéo thả"]
+    subgraph UI_Layer["1. LỚP GIAO DIỆN & ĐỒ HỌA 2.5D (PRESENTATION LAYER)"]
+        Stage3D["Stage3D Diorama (Three.js Overlay)<br/>• Chồng xu tiền mặt 3D (CoinStackProp)<br/>• Xích nợ cảnh báo 3D (DebtChainProp)<br/>• Cờ đích 90M/180M/360M (GoalFlagProp)<br/>• Ánh sáng 4 Vòng & 3 Chương (LightingRig)"]
+        Board25D["Isometric 2.5D Board & 3D Pawns<br/>• Mặt bàn cờ B18 (940 × 1672 px)<br/>• Nhân vật 3D (Character3D) & Xúc xắc 3D (Dice3D)"]
+        ReactUI["Tactile Financial UI (React 19)<br/>• Bản đồ 3 Đảo Chương (MapScreen)<br/>• Thẻ quyết định Holographic & Biểu đồ giá<br/>• Cảnh báo Đệm khẩn cấp & Call Margin<br/>• AI Coach phân tích sau ván"]
     end
 
     subgraph Coordination_Layer["2. LỚP ĐIỀU PHỐI TRUNG TÂM (ORCHESTRATION LAYER)"]
-        MSM["MasterSessionManager<br/>• Hồ sơ người chơi (Player Profile)<br/>• Điều phối luồng chuyển tiếp 3 Chương (Ch1 -> Ch2 -> Ch3)<br/>• Cơ chế chuyển giao vốn (90M VND Carryover)<br/>• Quản lý lưu trữ & Checkpoint (Save/Load)"]
+        MSM["MasterSessionManager (src/game/master-session.ts)<br/>• Hồ sơ người chơi (MasterPlayerProfile)<br/>• Mở khóa tuần tự Chương 1 -> Chương 2 -> Chương 3<br/>• Chuyển giao vốn có trần (Capped Carryover +15M / +30M)"]
     end
 
-    subgraph Engine_Layer["3. LỚP CỖ MÁY TÍNH TOÁN KINH TẾ (MICRO-ENGINES LAYER)"]
-        E1["Chapter 1 Engine: Cờ Tỷ Phú B18<br/>• 18 Ô Bàn cờ & Vĩ mô 4 Quý 2026<br/>• 5 Kênh tài sản & Quỹ khẩn cấp 10M<br/>• Thuật toán Total Worth ≥ 90M"]
-        E2["Chapter 2 Engine: Coffee Startup<br/>• Quản lý P&L theo tháng (Tháng 1..3)<br/>• Định phí & Biến phí F&B thực tế<br/>• Điểm hòa vốn & Runway tiền mặt"]
-        E3["Chapter 3 Engine: Chain & Franchise<br/>• Quản trị chuỗi 3-5 cửa hàng<br/>• Doanh thu Nhượng quyền & Royalty<br/>• Bếp trung tâm & Gọi vốn Cap Table"]
+    subgraph Engine_Layer["3. LỚP CỖ MÁY TÍNH TOÁN TÀI CHÍNH (CORE BOARD ENGINE)"]
+        Presets["Chapter Presets (src/data/chapter-presets.ts)<br/>• Ch1: 50M -> 90M (4 Vòng, Đệm 10M)<br/>• Ch2: 90M+ -> 180M (4 Vòng, Lạm phát +1M, Hệ quả trễ)<br/>• Ch3: 180M+ -> 360M (5 Vòng, Đòn bẩy 120M & Call Margin 60%)"]
+        CoreEngine["B18 Financial Engine (src/game/engine.ts & settlement.ts)<br/>• 5 Kênh tài sản: Tiết kiệm, Cổ phiếu, Trái phiếu V2.5, Vàng, Kinh doanh<br/>• Bẫy thanh khoản (pendingPayment / fundPayment)<br/>• Hệ quả trễ & Thanh lý cưỡng bức Call Margin"]
     end
 
     subgraph Infrastructure_Layer["4. LỚP DỊCH VỤ DÙNG CHUNG (INFRASTRUCTURE & SERVICES)"]
-        Storage["Storage Adapter (Capacitor Preferences / LocalStorage)"]
-        Audio["SoundFX & BGM Engine (AudioContext Web API)"]
-        AssetRes["Asset Resolver (assetUrl thông minh cho GitHub Pages & Native)"]
-        RNGCore["Deterministic RNG (Seed-based XorShift Generator)"]
+        Storage["LocalStorage Persistence (saved-game.ts & master-session.ts)"]
+        Audio["Web Audio API Synthesizer & Haptics (audio.ts)"]
+        RNGCore["Deterministic Seed-based RNG (random.ts)"]
     end
 
     UI_Layer --> Coordination_Layer
@@ -47,123 +45,39 @@ flowchart TD
 
 ## 2. LỚP ĐIỀU PHỐI TRUNG TÂM (`MasterSessionManager`)
 
-`MasterSessionManager` là đầu mối điều phối dữ liệu duy nhất (Single Source of Truth) trong toàn bộ ứng dụng, đảm bảo tính liên kết xuyên suốt giữa 3 Chương mà không làm phát sinh sự phụ thuộc chéo (Circular Dependencies).
-
-### 2.1. Cấu Trúc Dữ Liệu Hồ Sơ Toàn Ván (Master Session Schema)
-
-```typescript
-export interface MasterPlayerProfile {
-  playerId: string;
-  playerName: string;
-  createdAt: number;
-  lastActive: number;
-  
-  // Trạng thái mở khóa & Tiến độ
-  unlockedChapters: {
-    chapter1: boolean;           // Mặc định: true
-    chapter2: boolean;           // Mở khóa khi Thắng Ch1 (Total Worth >= 90M)
-    chapter3: boolean;           // Mở khóa khi Thắng Ch2 (Hòa vốn & Lãi dương)
-  };
-  activeChapter: 1 | 2 | 3;
-  
-  // Dữ liệu chuyển giao thành quả (Carryover Data)
-  carryoverFromChapter1?: {
-    finalNetWorth: number;       // Số tiền tích lũy được (>= 90.000.000 VND)
-    startingCapitalForCh2: number; // Vốn khởi nghiệp chuyển sang Chương 2
-    financialHealthGrade: 'S' | 'A' | 'B' | 'C' | 'D';
-    completedAt: number;
-  };
-  
-  carryoverFromChapter2?: {
-    finalMonthlyCashflow: number; // Dòng tiền thặng dư hàng tháng
-    accumulatedCash: number;     // Tiền mặt dự trữ chuyển sang làm vốn mở chuỗi
-    brandReputation: number;     // Điểm uy tín thương hiệu ban đầu cho Ch3
-    completedAt: number;
-  };
-  
-  // Trạng thái lưu trữ từng chương
-  savedStates: {
-    chapter1?: Chapter1SavedState;
-    chapter2?: Chapter2SavedState;
-    chapter3?: Chapter3SavedState;
-  };
-}
-```
-
-### 2.2. Cơ Chế Chuyển Giao Dòng Vốn Giữa Các Chương (Carryover Flow)
+`MasterSessionManager` (`src/game/master-session.ts`) quản lý tiến trình xuyên suốt 3 Chương Bàn Cờ mà vẫn giữ tính cân bằng toán học thông qua cơ chế **Capped Carryover**:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Player as Người Chơi
-    participant Ch1 as Chương 1 Engine (B18)
+    participant Ch1 as Chương 1 (50M -> 90M)
     participant MSM as MasterSessionManager
-    participant Ch2 as Chương 2 Engine (Coffee Shop)
-    participant Ch3 as Chương 3 Engine (Chain Expansion)
+    participant Ch2 as Chương 2 (90M+ -> 180M)
+    participant Ch3 as Chương 3 (180M+ -> 360M)
 
-    Player->>Ch1: Hoàn thành 4 Vòng chơi (4 Quý 2026)
-    Ch1->>Ch1: Kết toán Total Worth = 97.200.000 VND (≥ 90M)
-    Ch1->>MSM: Gửi tín hiệu CHIẾN THẮNG + Payload Tài Sản
-    MSM->>MSM: Mở khóa unlockedChapters.chapter2 = true
-    MSM->>MSM: Khởi tạo carryoverFromChapter1 (Vốn: 97.200.000 VND)
-    MSM->>Player: Hiển thị Màn hình Vinh danh & Mở khóa Chương 2
-    
-    Player->>MSM: Bắt đầu Chương 2
-    MSM->>Ch2: Khởi tạo CoffeeShopState với Cash = 97.200.000 VND
-    Player->>Ch2: Vận hành 3 tháng, đạt điểm hòa vốn & Lãi ròng > 0
-    Ch2->>MSM: Gửi tín hiệu CHIẾN THẮNG Chương 2
-    MSM->>MSM: Mở khóa unlockedChapters.chapter3 = true
-    MSM->>Ch3: Khởi tạo ChainState mang theo Uy tín & Dòng tiền thặng dư
+    Player->>Ch1: Hoàn thành 4 Vòng B18
+    Ch1->>Ch1: Kết toán Nguồn Huy Động Hợp Lệ = 112.000.000 VND (≥ 90M)
+    Ch1->>MSM: recordBoardChapterVictory(profile, 1, 112M)
+    MSM->>MSM: Mở khóa Chương 2 + Capped Carryover = Min(15M, 112M - 90M) = +15M
+    Player->>Ch2: Bắt đầu Chương 2 với Vốn khởi điểm = 90M + 15M = 105.000.000 VND
+    Player->>Ch2: Vượt lạm phát & hệ quả trễ sau 4 Vòng, đạt 205.000.000 VND (≥ 180M)
+    Ch2->>MSM: recordBoardChapterVictory(profile, 2, 205M)
+    MSM->>MSM: Mở khóa Chương 3 + Capped Carryover = Min(30M, 205M - 180M) = +25M
+    Player->>Ch3: Bắt đầu Chương 3 với Vốn khởi điểm = 180M + 25M = 205.000.000 VND
+    Player->>Ch3: Vượt 5 Vòng chu kỳ & phòng vệ Call Margin, đạt ≥ 360.000.000 VND
 ```
 
 ---
 
-## 3. PIPELINE ĐỒ HỌA HYBRID 3D TỐI ƯU MOBILE (`ThreeSceneManager`)
+## 3. PIPELINE ĐỒ HỌA 2.5D HYBRID DIORAMA (`ChapterStage`)
 
-Để giải quyết bài toán hiệu năng, chống tràn RAM và tránh tình trạng mất ngữ cảnh đồ họa (WebGL Context Loss) trên iOS Safari / Android WebView, toàn bộ phần hiển thị 3D được quản trị qua một kiến trúc tập trung.
-
-### 3.1. Vòng Đời Render Có Kiểm Soát (Controlled Lifecycle)
-
-```mermaid
-stateDiagram-v2
-    [*] --> Unmounted : Màn hình chưa hiển thị
-    Unmounted --> Initializing : User mở màn hình 3D
-    Initializing --> ActiveLoop : Tạo Canvas, nạp GLTF, kích hoạt RAF
-    ActiveLoop --> PausedLoop : User mở Modal P&L / Thẻ Tình Huống tĩnh
-    PausedLoop --> ActiveLoop : User đóng Modal, quay lại tương tác 3D
-    ActiveLoop --> Disposing : User chuyển Chương / Rời màn hình
-    PausedLoop --> Disposing : User chuyển Chương / Rời màn hình
-    Disposing --> Unmounted : dispose() Geometry, Material, Texture, Renderer
-```
-
-### 3.2. Quy Tắc Giải Phóng Bộ Nhớ WebGL Bắt Buộc (Disposal Contract)
-Mọi component 3D trong dự án (máy pha cà phê, thành phố 3D, xúc xắc 3D) bắt buộc phải triển khai hàm dọn dẹp bộ nhớ:
-```typescript
-export function cleanUpThreeScene(
-  scene: THREE.Scene, 
-  renderer: THREE.WebGLRenderer
-) {
-  scene.traverse((object) => {
-    if (object instanceof THREE.Mesh) {
-      object.geometry?.dispose();
-      if (Array.isArray(object.material)) {
-        object.material.forEach((mat) => mat.dispose());
-      } else if (object.material) {
-        object.material.dispose();
-      }
-    }
-  });
-  renderer.dispose();
-  renderer.forceContextLoss();
-}
-```
+1. **Tách biệt hoàn toàn khỏi Logic Engine:** `extractVisualMetaphors(game)` (`mobile_app/src/features/stage3d/bindings/stateBindings.ts`) là một pure adapter đọc `GameState` và xuất ra chiều cao chồng xu, số mắt xích nợ, tỷ lệ tiến độ cờ đích và thời gian ánh sáng trong ngày.
+2. **Giải phóng bộ nhớ WebGL bắt buộc:** Khi rời bàn cờ, `ChapterStage.tsx` hủy `requestAnimationFrame` và gọi `.dispose()` trên toàn bộ Prop (`CoinStackProp`, `DebtChainProp`, `GoalFlagProp`, `LightingRig`), Geometry, Material và `renderer.forceContextLoss()`.
 
 ---
 
 ## 4. BẢO MẬT & KIỂM SOÁT TÍNH TOÀN VẸN DỮ LIỆU
 
-1. **Chống Sai Số Số Thực (Zero Floating-Point Drift):** Mọi phép tính tiền tệ đều được làm tròn về số nguyên VND (`Math.round()` hoặc `Math.floor()`) trước khi lưu vào State, tuyệt đối không lưu số lẻ như `35.00000000001 VND`.
-2. **Deterministic Seed-based Replay:** Cùng một chuỗi hạt giống (`seed`), thứ tự ra xúc xắc, biến cố vĩ mô và giá cả thị trường sẽ tái hiện chuẩn xác 100%, phục vụ cho việc kiểm thử tự động và chống gian lận.
-3. **Quy Chuẩn Kiểm Thử Khép Kín (Regression Testing Gate):**
-   - Bộ 360 unit tests hiện hữu phải pass 100% trước bất kỳ thay đổi nào.
-   - Thêm bộ test độc lập cho Chapter 2 (`tests/chapter2_pnl.test.ts`) và Chapter 3 (`tests/chapter3_chain.test.ts`).
+1. **Chống Sai Số Số Thực (Zero Floating-Point Drift):** Toàn bộ phép tính giá cổ phiếu, phí giao dịch, spread vàng, lãi tiết kiệm, coupon trái phiếu và phạt Call Margin đều làm tròn về số nguyên VND (`Math.round()`).
+2. **Deterministic Seed-based Replay:** Cùng một chuỗi hạt giống (`seed`) và chuỗi quyết định của người chơi sẽ luôn tái hiện chính xác 100% lịch sử giá và kết quả ván cờ.

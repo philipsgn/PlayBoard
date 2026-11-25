@@ -1,8 +1,9 @@
 import { localizeNarrative } from '../../src/components/glossary'
-import { useEffect, useRef, useState, useSyncExternalStore, lazy, Suspense } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import tilesData from './data/tiles.json'
 import { boardFor } from '../../src/data/board'
 import { goalProgress } from '../../src/game/selectors'
+import { safeBufferForGame } from '../../src/game/chapter-mechanics'
 import { money } from '../../src/game/format'
 import { Modal } from '../../src/components/Modal'
 import { MobileContainer } from './components/MobileContainer'
@@ -14,7 +15,7 @@ import { FloatingMoney } from './components/FloatingMoney'
 import type { MoneyParticle } from './components/FloatingMoney'
 import { GameSetup } from './components/GameSetup'
 import { GamePhase } from './components/GamePhase'
-import { createMvpMobileGame, createMobileSession, movementPath } from './game/session'
+import { createMvpMobileGame, createChapterBoardGame, createMobileSession, movementPath } from './game/session'
 import type { MobileCommand } from './game/session'
 import { sound } from './utils/audio'
 import { isAutoShowRulesEnabled } from './game/rules-settings'
@@ -32,8 +33,12 @@ import { SettingsModal } from './components/SettingsModal'
 import { hasSeenTutorial } from './game/onboarding'
 import { MapScreen } from './components/MapScreen'
 import type { MapNodeConfig } from './game/map-progress'
-const CoffeeShopView = lazy(() => import('./components/CoffeeShopView').then(m => ({ default: m.CoffeeShopView })))
-import { loadMasterProfile, recordChapter1Victory } from '../../src/game/master-session'
+import {
+  loadMasterProfile,
+  recordBoardChapterVictory,
+  getCarryoverBonusForChapter,
+  setActiveChapter,
+} from '../../src/game/master-session'
 
 // Coordinates are artwork metadata; category/order/labels come from the official C20 or B18 board.
 const coordinatesFor = (board: ReturnType<typeof boardFor>) => {
@@ -66,25 +71,28 @@ export function GameExperience({ session, onRestart, onHome, onHelp, helpOpen = 
   const generation = useRef(0)
   const particleId = useRef(0)
   const nextActionAt = useRef(0)
-  const isDangerZone = game.portfolio.cash < 5_000_000 && game.phase !== 'finished'
+  const dangerThreshold = Math.round(safeBufferForGame(game) / 2)
+  const isDangerZone = game.portfolio.cash < dangerThreshold && game.phase !== 'finished'
   const prevCash = useRef(game.portfolio.cash)
 
   useEffect(() => {
     if (game.phase === 'finished') {
       const goal = goalProgress(game)
-      if (goal.funds >= 90_000_000) {
-        const grade = goal.funds >= 120_000_000 ? 'S' : goal.funds >= 105_000_000 ? 'A' : 'B'
-        recordChapter1Victory(loadMasterProfile(), goal.funds, grade)
+      if (goal.funds >= goal.target) {
+        const chapterId = game.chapterId ?? 1
+        const ratio = goal.funds / goal.target
+        const grade = ratio >= 1.3 ? 'S' : ratio >= 1.15 ? 'A' : 'B'
+        recordBoardChapterVictory(loadMasterProfile(), chapterId, goal.funds, grade)
       }
     }
   }, [game.phase])
 
   useEffect(() => {
-    if (isDangerZone && prevCash.current >= 5_000_000) {
+    if (isDangerZone && prevCash.current >= dangerThreshold) {
       sound.playHeartbeatTension()
     }
     prevCash.current = game.portfolio.cash
-  }, [game.portfolio.cash, isDangerZone])
+  }, [game.portfolio.cash, isDangerZone, dangerThreshold])
 
   useEffect(() => () => { generation.current++ }, [])
   useEffect(() => {
@@ -208,6 +216,7 @@ export function GameExperience({ session, onRestart, onHome, onHelp, helpOpen = 
               debt={game.portfolio.debt}
               lawfulProceeds={goal.funds}
               targetGoal={goal.target}
+              chapterId={game.chapterId ?? 1}
               isMuted={muted}
               lap={game.lap}
               totalLaps={game.totalLaps}
@@ -332,7 +341,7 @@ export function GameExperience({ session, onRestart, onHome, onHelp, helpOpen = 
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<'entrance' | 'map' | 'game' | 'setup' | 'chapter2'>('entrance')
+  const [screen, setScreen] = useState<'entrance' | 'map' | 'game' | 'setup'>('entrance')
   const [session, setSession] = useState<Session | null>(null)
   const [saved, setSaved] = useState(() => loadGameLocally())
   const [saveNotice, setSaveNotice] = useState('')
@@ -341,9 +350,6 @@ export default function App() {
   const [mapOverlay, setMapOverlay] = useState<'portfolio' | 'rules' | null>(null)
 
   useEffect(() => { preloadGameAssets() }, [])
-
-  // Chương 1 (Node 1) là chương duy nhất mở khóa, gồm 4 vòng chơi (Laps 1-4).
-  // Các vòng chơi thuộc tiến trình nội bộ của Chương 1, không nhảy node hay mở khóa Chương 2-5.
 
   const returnToMap = () => {
     if (session) {
@@ -361,7 +367,9 @@ export default function App() {
   }
 
   const handleStartFreshGame = () => {
-    const fresh = createMvpMobileGame(String(Date.now()), 0, 1)
+    const activeChapter = session?.getSnapshot().chapterId ?? loadMasterProfile().activeChapter ?? 1
+    const carryover = getCarryoverBonusForChapter(loadMasterProfile(), activeChapter)
+    const fresh = createChapterBoardGame(activeChapter, String(Date.now()), carryover, 0, 1)
     saveGameLocally(fresh)
     setSaved(fresh)
     setSession(createMobileSession(fresh))
@@ -375,29 +383,26 @@ export default function App() {
   const [guideHelpOpen, setGuideHelpOpen] = useState(false)
   const openHelp = () => setGuideHelpOpen(true)
 
-  // Chạm Node trên Bản Đồ (Chương 1 hoặc Chương 2)
+  // Chạm Node trên Bản Đồ (Chương 1, Chương 2, hoặc Chương 3 Bàn Cờ Tỷ Phú Tài Chính)
   const handlePlayNode = (node: MapNodeConfig) => {
     sound.playClick()
-    if (node.stageNumber === 2 || node.chapterId === 2) {
-      setScreen('chapter2')
-      return
-    }
-    void node.id
-    if (saved && saved.phase !== 'finished') {
+    const profile = loadMasterProfile()
+    setActiveChapter(profile, node.chapterId)
+    const savedChapter = saved?.chapterId ?? 1
+    if (saved && saved.phase !== 'finished' && savedChapter === node.chapterId) {
       setSession(createMobileSession(saved))
     } else {
-      const fresh = createMvpMobileGame(String(Date.now()), 0, 1)
+      const carryoverBonus = getCarryoverBonusForChapter(profile, node.chapterId)
+      const fresh = createChapterBoardGame(node.chapterId, String(Date.now()), carryoverBonus, 0, 1)
       saveGameLocally(fresh)
       setSaved(fresh)
       setSession(createMobileSession(fresh))
     }
 
     if (isAutoShowRulesEnabled()) {
-      // Mở ngay Luật chơi Chương tương ứng (Chương 1: tab 0)
       const tabIndex = Math.max(0, (node.stageNumber || 1) - 1)
       setChapterRulesTab(tabIndex)
     } else {
-      // Tắt tự động -> vào thẳng bàn cờ
       setScreen('game')
     }
   }
@@ -438,15 +443,6 @@ export default function App() {
           ) : (
             <div style={{ display: 'none' }} aria-hidden="true" id="initial-savings" />
           )}
-        </MobileContainer>
-      ) : screen === 'chapter2' ? (
-        <MobileContainer>
-          <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center', color: '#fde68a' }}>Đang tải Quán Cà Phê...</div>}>
-            <CoffeeShopView
-              onBackToMap={() => setScreen('map')}
-              onOpenHelp={openHelp}
-            />
-          </Suspense>
         </MobileContainer>
       ) : screen === 'map' ? (
         <MobileContainer>

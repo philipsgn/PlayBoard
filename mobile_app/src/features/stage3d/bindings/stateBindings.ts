@@ -36,19 +36,22 @@ export function extractVisualMetaphors(game?: GameState | null): VisualMetaphors
   const debt = Math.max(0, game.portfolio.debt || 0);
   const totalNet = Math.max(0, netWorth(game.portfolio));
   const lap = Math.min(4, Math.max(1, game.lap || 1));
+  const targetGoal = game.targetGoalOverride ?? GOAL_TARGET_AMOUNT;
+  const debtCap = game.borrowingLimit || DEBT_CAP;
+  const maxSafeDebt = Math.round(debtCap * (MAX_SAFE_DEBT / DEBT_CAP));
 
   // 1. Chồng xu tiền mặt: 0 đ -> 0.1, 10M -> 0.3, 50M -> 0.8, 90M+ -> 1.5
   const coinHeight = Math.min(1.5, Math.max(0.1, Number((cash / 60_000_000).toFixed(2))));
   const coinCount = Math.min(15, Math.max(1, Math.round(coinHeight * 10)));
 
-  // 2. Dây xích nợ: tỷ lệ nợ trên hạn mức trần 30M
-  const debtRatio = Math.min(1.0, debt / DEBT_CAP);
+  // 2. Dây xích nợ: tỷ lệ nợ trên hạn mức trần của chương
+  const debtRatio = Math.min(1.0, debt / debtCap);
   const debtChainLinks = Math.round(debtRatio * 10);
-  const isDebtCritical = debt >= MAX_SAFE_DEBT;
+  const isDebtCritical = debt >= maxSafeDebt;
 
-  // 3. Tiến độ tích lũy vốn 90M
-  const goalProgressRatio = Math.min(1.0, Math.max(0, totalNet / GOAL_TARGET_AMOUNT));
-  const goalAchieved = totalNet >= GOAL_TARGET_AMOUNT;
+  // 3. Tiến độ tích lũy vốn theo mục tiêu của chương (90M / 180M / 360M)
+  const goalProgressRatio = Math.min(1.0, Math.max(0, totalNet / targetGoal));
+  const goalAchieved = totalNet >= targetGoal;
 
   // 4. Ánh sáng/Thời điểm trong ngày theo vòng (1 -> morning, 2 -> noon, 3 -> afternoon, 4 -> night)
   const timeMapping: Record<number, TimeOfDay> = {

@@ -61,14 +61,25 @@ export interface BondLot {
 }
 export interface BusinessState { capital: number; recoverableCapital: number; upgrades: Record<string, number>; economicMultiplier: number }
 export type Portfolio = Record<Asset | 'cash' | 'savings' | 'debt', number>
+export interface DelayedConsequenceState {
+  insuredLapsRemaining: number
+  businessRevenuePenaltyNextLap: boolean
+}
 export interface Option {
   id: string; label: string; detail: string; cost?: number; income?: number
   asset?: Asset; amount?: number; obligation?: number; recurringIncomeIncrease?: number
+  delayedEffect?: 'activate-insurance' | 'defer-maintenance'
 }
 export interface GameEvent {
   id: string; category: Category; title: string; description: string; options: Option[]
 }
 export interface Snapshot {
+  // Multi-chapter board progression metadata (absent in legacy Chapter 1 snapshots)
+  chapterId?: 1 | 2 | 3
+  startingCapitalOverride?: number
+  targetGoalOverride?: number
+  delayedEffects?: DelayedConsequenceState
+  marginCallCount?: number
   // Absence always retains the historical config/goal. Never infer from gameMode.
   gameplayProfile?: GameplayProfile
   courseRulesVersion?: CourseRulesVersion

@@ -2,7 +2,7 @@ import { RULES } from '../data/config.ts'
 import type { Snapshot } from './types.ts'
 import { MULTI_COURSES } from '../data/courses.ts'
 
-type Profile = Pick<Snapshot, 'gameplayProfile' | 'goalRulesVersion'>
+type Profile = Pick<Snapshot, 'gameplayProfile' | 'goalRulesVersion' | 'targetGoalOverride'>
 export const CORE_MVP_PROFILE = 'core-mvp-b18-v1' as const
 export const MULTI_COURSE_PROFILE = 'core-mvp-b18-multi-course-v1' as const
 export const CORE_MVP_RULES = Object.freeze({ ...RULES, laps: 4, tiles: 18,
@@ -25,5 +25,6 @@ export function rulesForGame(game: { gameplayProfile?: Snapshot['gameplayProfile
 export function goalForGame(game: Profile) {
   if (isCoreMvp(game) ? game.goalRulesVersion !== 'single-90m-v1' : game.goalRulesVersion !== undefined) throw new Error('Mục tiêu không khớp phiên bản gameplay.')
   const rules = rulesForGame(game)
-  return { amount: rules.goal, reserve: rules.cashGoal, target: rules.goal + rules.cashGoal, single: isCoreMvp(game) }
+  const amount = game.targetGoalOverride ?? rules.goal
+  return { amount, reserve: rules.cashGoal, target: amount + rules.cashGoal, single: isCoreMvp(game) }
 }

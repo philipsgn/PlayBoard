@@ -5,6 +5,11 @@ import { savingsProfileForGame } from './savings.ts'
 
 export function snapshot(s: GameState): Snapshot {
   return { gameMode:s.gameMode, boardLayout:s.boardLayout, totalLaps:s.totalLaps, businessPurchaseTurn:s.businessPurchaseTurn,
+    ...(s.chapterId !== undefined ? { chapterId: s.chapterId } : {}),
+    ...(s.startingCapitalOverride !== undefined ? { startingCapitalOverride: s.startingCapitalOverride } : {}),
+    ...(s.targetGoalOverride !== undefined ? { targetGoalOverride: s.targetGoalOverride } : {}),
+    ...(s.delayedEffects ? { delayedEffects: { ...s.delayedEffects } } : {}),
+    ...(s.marginCallCount !== undefined ? { marginCallCount: s.marginCallCount } : {}),
     ...(s.gameplayProfile ? { gameplayProfile:s.gameplayProfile } : {}),
     ...(s.courseRulesVersion ? { courseRulesVersion:s.courseRulesVersion } : {}),
     ...(s.ownedCourses ? { ownedCourses:[...s.ownedCourses] } : {}),
@@ -56,6 +61,7 @@ export function record(s: GameState, before: Snapshot, entry: Entry): GameState 
 
 export function copyState(s: GameState): GameState {
   return { ...s, portfolio: { ...s.portfolio }, unlockedAssets: [...s.unlockedAssets],
+    ...(s.delayedEffects ? { delayedEffects: { ...s.delayedEffects } } : {}),
     ...(s.ownedCourses ? { ownedCourses:[...s.ownedCourses] } : {}),
     ...(s.bondCredit ? { bondCredit: structuredClone(s.bondCredit) } : {}),
     ...(s.savingsProfile ? { savingsProfile: savingsProfileForGame(s) } : {}),

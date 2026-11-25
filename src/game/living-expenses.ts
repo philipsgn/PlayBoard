@@ -1,5 +1,6 @@
 import type { BoardLayoutId, BoardRevision, LivingExpenseRulesVersion, GameplayProfile, GoalRulesVersion } from './types.ts'
 import { isCoreMvp, isMultiCourse, rulesForGame, goalForGame } from './rules-profile.ts'
+import { progressiveLivingCost } from './chapter-mechanics.ts'
 
 // Candidate parameter, frozen for this explicit version. Research copies may vary
 // this constant in isolation; the playable candidate never reads research settings.
@@ -14,8 +15,12 @@ export function livingExpenseRulesForGame(game: { livingExpenseRulesVersion?: Li
 export function hasPeriodicLiving(game: { livingExpenseRulesVersion?: LivingExpenseRulesVersion }) {
   return livingExpenseRulesForGame(game) !== 'v2.4-on-landing'
 }
-export function livingCostForGame(game: { gameplayProfile?: GameplayProfile; livingExpenseRulesVersion?: LivingExpenseRulesVersion }) {
-  return isCoreMvp(game) ? rulesForGame(game).livingCost : PERIODIC_LIVING_COST
+export function livingCostForGame(game: { gameplayProfile?: GameplayProfile; livingExpenseRulesVersion?: LivingExpenseRulesVersion; chapterId?: 1 | 2 | 3; lap?: number }) {
+  const base = isCoreMvp(game) ? rulesForGame(game).livingCost : PERIODIC_LIVING_COST
+  if (game.chapterId && game.chapterId >= 2) {
+    return progressiveLivingCost({ chapterId: game.chapterId, lap: game.lap ?? 1 }, base)
+  }
+  return base
 }
 export function validateLivingBoard(game: { livingExpenseRulesVersion?: LivingExpenseRulesVersion; boardRevision?: BoardRevision; boardLayout: BoardLayoutId; gameplayProfile?: GameplayProfile; goalRulesVersion?: GoalRulesVersion }) {
   if (isCoreMvp(game)) {

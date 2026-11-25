@@ -8,6 +8,7 @@ interface TopHudProps {
   currentFund?: number
   targetGoal?: number
   targetFund?: number
+  chapterId?: 1 | 2 | 3
   isMuted?: boolean
   onToggleMute?: () => void
   onToggleSound?: () => void
@@ -28,6 +29,7 @@ export function TopHud({
   currentFund,
   targetGoal,
   targetFund,
+  chapterId = 1,
   isMuted,
   onToggleMute,
   onToggleSound,
@@ -44,9 +46,11 @@ export function TopHud({
   const goal = targetGoal ?? targetFund ?? 90_000_000
   const progress = Math.max(0, Math.min(100, (proceeds / goal) * 100))
   const toggleAudio = onToggleMute ?? onToggleSound
-  const isDanger = cash < 5_000_000
+  const dangerCutoff = chapterId === 3 ? 12_500_000 : chapterId === 2 ? 7_500_000 : 5_000_000
+  const isDanger = cash < dangerCutoff
   const remainingLaps = Math.max(0, maxLap - currentLap)
-  const projectedProceeds = proceeds + remainingLaps * 9_000_000
+  const netLapEstimate = chapterId === 3 ? 16_000_000 : chapterId === 2 ? 12_000_000 : 9_000_000
+  const projectedProceeds = proceeds + remainingLaps * netLapEstimate
 
   return (
     <header
@@ -427,7 +431,7 @@ export function TopHud({
                 whiteSpace: 'nowrap',
               }}
             >
-              VÒNG {String(currentLap).padStart(2, '0')} / {String(maxLap).padStart(2, '0')}
+              CH{chapterId} · VÒNG {String(currentLap).padStart(2, '0')} / {String(maxLap).padStart(2, '0')}
             </span>
           </div>
 

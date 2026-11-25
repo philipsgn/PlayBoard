@@ -12,8 +12,10 @@ export function victory(s: GameState) {
   const funds = liquidatableFunds(s)
   if (isCoreMvp(s)) {
     const wealth = funds >= goalForGame(s).target
-    const completed = s.phase === 'finished' && s.termination === 'completed' && s.totalLaps === 4 && s.summaries.length === 4
-      && [1,2,3,4].every(lap => s.summaries.some(summary => summary.lap === lap))
+    const expectedLaps = s.chapterId === 3 ? 5 : 4
+    const requiredLaps = Array.from({ length: expectedLaps }, (_, i) => i + 1)
+    const completed = s.phase === 'finished' && s.termination === 'completed' && s.totalLaps === expectedLaps && s.summaries.length === expectedLaps
+      && requiredLaps.every(lap => s.summaries.some(summary => summary.lap === lap))
     return { wealth, liquidity:wealth, won:completed && wealth }
   }
   const wealth = funds >= RULES.goal

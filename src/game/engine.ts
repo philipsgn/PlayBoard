@@ -16,6 +16,7 @@ import { encounterRulesForGame } from './encounters.ts'
 import { customerPreferenceForLap } from './customer-preferences.ts'
 import { bondRulesForGame, initializeBondCredit } from './bond-credit.ts'
 import { hasPeriodicLiving, PERIODIC_BOARD_REVISION, validateLivingBoard } from './living-expenses.ts'
+import { evaluateAndExecuteMarginCall } from './chapter-mechanics.ts'
 import type { LivingExpenseRulesVersion, GameplayProfile } from './types.ts'
 import type { BondRulesVersion } from './types.ts'
 import type { BusinessRulesVersion, EncounterRulesVersion, FundingSource, GameModeId, GameState, Option, Term, SavingsProfileId, StockCatalogVersion } from './types.ts'
@@ -87,7 +88,12 @@ function encounter(s: GameState): GameState {
   if (['stocks', 'bonds', 'gold', 'business'].includes(tile)) next.unlockedAssets = [...new Set([...s.unlockedAssets, tile as 'stocks' | 'bonds' | 'gold' | 'business'])]
   next = record(next,before,{kind:'encounter',eventId:next.eventId!,title:`Dừng ô ${s.position+1}: ${boardFor(s)[s.position].label}`,
     decision:'Gặp ô trên bàn',consequence:`${s.boardLayout} · ${tile} · Kích hoạt sự kiện tại đích.`}) as typeof next
-  if (tile === 'macro') next = applyMacroShock(next, next.eventId!) as typeof next
+  if (tile === 'macro') {
+    next = applyMacroShock(next, next.eventId!) as typeof next
+    if (next.chapterId === 3) {
+      next = evaluateAndExecuteMarginCall(next) as typeof next
+    }
+  }
   return next
 }
 export function roll(state: GameState): GameState {
@@ -132,6 +138,22 @@ function applyOption(s: GameState, option: Option): GameState {
   if (isMultiCourse(s) && option.id.startsWith('course-')) {
     const course = MULTI_COURSES.find(c => option.id === `course-${c.id}`)!
     s.ownedCourses = [...s.ownedCourses!,course.id]
+  }
+  if (option.delayedEffect === 'activate-insurance') {
+    s.delayedEffects = {
+      insuredLapsRemaining: 2,
+      businessRevenuePenaltyNextLap: s.delayedEffects?.businessRevenuePenaltyNextLap ?? false,
+    }
+  } else if (option.delayedEffect === 'defer-maintenance') {
+    s.delayedEffects = {
+      insuredLapsRemaining: s.delayedEffects?.insuredLapsRemaining ?? 0,
+      businessRevenuePenaltyNextLap: true,
+    }
+  } else if (option.id === 'claim-insurance' && s.delayedEffects) {
+    s.delayedEffects = {
+      ...s.delayedEffects,
+      insuredLapsRemaining: Math.max(0, s.delayedEffects.insuredLapsRemaining - 1),
+    }
   }
   s.eventId = null
   s.phase = 'rolling'

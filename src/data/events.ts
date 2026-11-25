@@ -1,9 +1,9 @@
-import type { GameEvent } from '../game/types.ts'
+import type { DelayedConsequenceState, GameEvent, GameplayProfile } from '../game/types.ts'
 import { ECONOMY, RULES, MACRO_EVENTS } from './config.ts'
 import { money } from '../game/format.ts'
 import { isCoreMvp, isMultiCourse, rulesForGame } from '../game/rules-profile.ts'
 import { MULTI_COURSES } from './courses.ts'
-import type { GameplayProfile } from '../game/types.ts'
+import { getChapterPreset } from './chapter-presets.ts'
 
 const skip = { id: 'skip', label: 'Bỏ qua cơ hội', detail: 'Giữ tiền mặt, không thay đổi danh mục.' }
 const payment = (cost: number) => ({ id: 'pay', label: `Thanh toán ${money(cost)}`, detail: 'Nếu thiếu tiền, bạn chọn nguồn thanh toán.', cost })
@@ -30,15 +30,67 @@ export const EVENTS: GameEvent[] = [
     options: [{ id: 'acknowledge', label: 'Đã xem tác động', detail: 'Tiếp tục từ giá sau cú sốc.' }] })),
 ]
 
-export function eventsForGame(game: { gameplayProfile?: GameplayProfile }): GameEvent[] {
-  if (isMultiCourse(game)) return EVENTS.map(event => event.id !== 'course' ? event : {
-    ...event,title:'Đầu tư bản thân',description:'Hai khóa độc lập, học theo bất kỳ thứ tự nào. Mỗi lần ghé mua tối đa một khóa; lương tăng từ START kế tiếp.',
-    options:[...MULTI_COURSES.map(c => ({id:`course-${c.id}`,label:`Mua ${c.name.toLowerCase()}`,cost:c.cost,recurringIncomeIncrease:c.boost,
-      detail:`Học phí ${money(c.cost)} bằng tiền mặt; lương +${money(c.boost)}/START từ lần qua START tiếp theo. Không hoàn học phí.`})),skip],
+const scale500k = (amount: number, mult: number) => Math.round((amount * mult) / 500_000) * 500_000
+
+export function eventsForGame(game: { gameplayProfile?: GameplayProfile; chapterId?: 1 | 2 | 3; delayedEffects?: DelayedConsequenceState }): GameEvent[] {
+  let baseEvents: GameEvent[]
+  if (isMultiCourse(game)) {
+    baseEvents = EVENTS.map(event => event.id !== 'course' ? event : {
+      ...event,title:'Đầu tư bản thân',description:'Hai khóa độc lập, học theo bất kỳ thứ tự nào. Mỗi lần ghé mua tối đa một khóa; lương tăng từ START kế tiếp.',
+      options:[...MULTI_COURSES.map(c => ({id:`course-${c.id}`,label:`Mua ${c.name.toLowerCase()}`,cost:c.cost,recurringIncomeIncrease:c.boost,
+        detail:`Học phí ${money(c.cost)} bằng tiền mặt; lương +${money(c.boost)}/START từ lần qua START tiếp theo. Không hoàn học phí.`})),skip],
+    })
+  } else if (!isCoreMvp(game)) {
+    baseEvents = EVENTS
+  } else {
+    const rules = rulesForGame(game)
+    baseEvents = EVENTS.map(event => event.id !== 'course' ? event : { ...event, options: [
+      { id:'upgrade',label:`Tham gia khóa học ${money(rules.courseCost!)}`,detail:`Lương +${money(rules.courseBoost!)}/vòng từ START kế tiếp.`,cost:rules.courseCost,recurringIncomeIncrease:rules.courseBoost },skip,
+    ] })
+  }
+
+  if (!game.chapterId || game.chapterId === 1) return baseEvents
+
+  const preset = getChapterPreset(game.chapterId)
+  const mult = preset.eventScaleMultiplier
+  const insured = (game.delayedEffects?.insuredLapsRemaining ?? 0) > 0
+
+  return baseEvents.map(event => {
+    if (['medical', 'repair', 'family'].includes(event.id)) {
+      const scaledOptions = event.options.map(opt => ({
+        ...opt,
+        ...(opt.cost ? { cost: scale500k(opt.cost, mult), label: opt.id === 'pay' || opt.id === 'full' ? `Thanh toán ${money(scale500k(opt.cost, mult))}` : opt.label } : {}),
+        ...(opt.obligation ? { obligation: scale500k(opt.obligation, mult), detail: opt.id === 'defer' ? `Nghĩa vụ tại START +${money(scale500k(opt.obligation, mult))}.` : opt.detail } : {}),
+      }))
+      const optionsWithDelayed = [...scaledOptions]
+      if (insured) {
+        optionsWithDelayed.unshift({
+          id: 'claim-insurance',
+          label: 'Dùng Bảo hiểm Phòng vệ (0 ₫)',
+          detail: 'Hợp đồng bảo hiểm chi trả 100% chi phí biến cố cá nhân này.',
+          cost: 0,
+        })
+      } else if (preset.enableDelayedConsequences && event.id === 'medical') {
+        const billCost = scale500k(ECONOMY.personal.medical[0], mult)
+        optionsWithDelayed.push({
+          id: 'buy-insurance',
+          label: `Trả viện phí + Mua Bảo hiểm Phòng vệ (${money(billCost + 3_000_000)})`,
+          detail: 'Đóng thêm 3.000.000 ₫ phí bảo hiểm để miễn nhiễm 100% biến cố cá nhân trong 2 vòng kế tiếp.',
+          cost: billCost + 3_000_000,
+          delayedEffect: 'activate-insurance',
+        })
+      }
+      if (preset.enableDelayedConsequences && event.id === 'repair') {
+        optionsWithDelayed.push({
+          id: 'defer-maintenance',
+          label: 'Cắt giảm chi phí bảo trì tiệm (+3.000.000 ₫)',
+          detail: 'Thu hồi +3.000.000 ₫ tiền mặt ngắn hạn, nhưng hệ quả trễ làm giảm 35% dòng tiền Tiệm kinh doanh ở kỳ START tiếp theo.',
+          income: 3_000_000,
+          delayedEffect: 'defer-maintenance',
+        })
+      }
+      return { ...event, options: optionsWithDelayed }
+    }
+    return event
   })
-  if (!isCoreMvp(game)) return EVENTS
-  const rules = rulesForGame(game)
-  return EVENTS.map(event => event.id !== 'course' ? event : { ...event, options: [
-    { id:'upgrade',label:`Tham gia khóa học ${money(rules.courseCost!)}`,detail:`Lương +${money(rules.courseBoost!)}/vòng từ START kế tiếp.`,cost:rules.courseCost,recurringIncomeIncrease:rules.courseBoost },skip,
-  ] })
 }
