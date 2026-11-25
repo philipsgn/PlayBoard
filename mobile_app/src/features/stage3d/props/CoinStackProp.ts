@@ -1,6 +1,6 @@
 /**
  * PROP 3D: CHỒNG XU TIỀN MẶT CẠNH QUÂN CỜ (COIN STACK PROP)
- * Chiều cao và số lượng đồng xu biến thiên theo số dư tiền mặt của người chơi.
+ * Vật liệu vàng sáng ấm (không bị đen khi thiếu envMap) và kích thước gọn gàng.
  */
 
 import * as THREE from 'three';
@@ -8,24 +8,25 @@ import * as THREE from 'three';
 export class CoinStackProp {
   public group: THREE.Group;
   private coins: THREE.Mesh[] = [];
-  private maxCoins = 15;
+  private maxCoins = 12;
   private coinMat: THREE.MeshStandardMaterial;
 
   constructor() {
     this.group = new THREE.Group();
 
     this.coinMat = new THREE.MeshStandardMaterial({
-      color: 0xf59e0b,
-      metalness: 0.88,
-      roughness: 0.22,
+      color: 0xfbbf24,
+      metalness: 0.25,
+      roughness: 0.35,
+      emissive: 0xd97706,
+      emissiveIntensity: 0.28,
     });
 
-    const coinGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.03, 16);
+    const coinGeo = new THREE.CylinderGeometry(0.085, 0.085, 0.022, 18);
 
     for (let i = 0; i < this.maxCoins; i++) {
       const coin = new THREE.Mesh(coinGeo, this.coinMat);
-      coin.position.set(0, i * 0.035, 0);
-      // Xoay góc nhẹ ngẫu nhiên để trông như chồng xu xếp tay thực tế
+      coin.position.set(0, i * 0.026, 0);
       coin.rotation.y = (i * 0.35) % Math.PI;
       coin.visible = false;
       this.group.add(coin);
@@ -33,9 +34,6 @@ export class CoinStackProp {
     }
   }
 
-  /**
-   * Cập nhật số xu hiển thị và vị trí 3D theo tọa độ quân cờ.
-   */
   public update(coinCount: number, x: number, y: number, z: number = 0) {
     this.group.position.set(x, y, z);
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { sound } from '../utils/audio';
-import { assetUrl } from '../utils/assets';
+import { FintechIcon } from './FintechIcon';
 
 export type MapTab = 'inventory' | 'rules' | null;
 
@@ -22,100 +22,62 @@ export const MapBottomDock: React.FC<MapBottomDockProps> = ({
         left: 0,
         right: 0,
         width: '100%',
+        maxWidth: '420px',
+        margin: '0 auto',
+        padding: '0 14px max(16px, env(safe-area-inset-bottom, 16px)) 14px',
         zIndex: 50,
-        fontFamily: "'Fredoka', sans-serif",
+        fontFamily: 'var(--font-sans)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px',
+        boxSizing: 'border-box',
       }}
     >
-      {/* NÚT TÚI ĐỒ (INVENTORY / PORTFOLIO) NEO GÓC DƯỚI CÙNG BÊN TRÁI - KHÔNG VIỀN THẺ HỘP THÔ CỨNG */}
       <button
+        type="button"
         onClick={() => {
           sound.playClick();
           onOpenInventory();
         }}
         aria-label="Mở Túi Đồ Danh Mục"
-        title="Túi đồ"
-        className="pointer-events-auto"
+        title="Danh mục Tài sản"
+        className="pointer-events-auto fintech-icon-btn"
         style={{
-          position: 'absolute',
-          bottom: 'max(32px, env(safe-area-inset-bottom, 32px))',
-          left: '36px',
-          background: 'none',
-          border: 'none',
-          outline: 'none',
-          cursor: 'pointer',
-          padding: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          filter: 'drop-shadow(0 10px 22px rgba(0, 0, 0, 0.8))',
-          transition: 'transform 0.15s ease',
-        }}
-        onPointerDown={(e) => {
-          (e.currentTarget as HTMLElement).style.transform = 'scale(0.92)';
-        }}
-        onPointerUp={(e) => {
-          (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+          flex: 1,
+          height: '52px',
+          padding: '0 16px',
+          gap: '8px',
+          borderRadius: '16px',
         }}
       >
-        <img
-          src={assetUrl('assets/cropped/tuido-icon.png')}
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = assetUrl('assets/tuido-icon.png');
-          }}
-          alt="Túi Đồ"
-          style={{
-            width: '120px',
-            height: '120px',
-            objectFit: 'contain',
-            display: 'block',
-          }}
-        />
+        <FintechIcon name="portfolio" size={18} color="#38BDF8" />
+        <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#F8FAFC' }}>
+          Danh mục tài sản
+        </span>
       </button>
 
-      {/* NÚT KIẾN THỨC (KNOWLEDGE / RULEBOOK) NEO GÓC DƯỚI CÙNG BÊN PHẢI - KHÔNG VIỀN THẺ HỘP THÔ CỨNG */}
       <button
+        type="button"
         onClick={() => {
           sound.playClick();
           onOpenRules();
         }}
         aria-label="Mở Sổ Tay Kiến Thức & Luật Chơi"
-        title="Kiến thức"
-        className="pointer-events-auto"
+        title="Sổ tay & Luật chơi"
+        className="pointer-events-auto fintech-icon-btn"
         style={{
-          position: 'absolute',
-          bottom: 'max(32px, env(safe-area-inset-bottom, 32px))',
-          right: '36px',
-          background: 'none',
-          border: 'none',
-          outline: 'none',
-          cursor: 'pointer',
-          padding: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          filter: 'drop-shadow(0 10px 22px rgba(0, 0, 0, 0.8))',
-          transition: 'transform 0.15s ease',
-        }}
-        onPointerDown={(e) => {
-          (e.currentTarget as HTMLElement).style.transform = 'scale(0.92)';
-        }}
-        onPointerUp={(e) => {
-          (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+          flex: 1,
+          height: '52px',
+          padding: '0 16px',
+          gap: '8px',
+          borderRadius: '16px',
         }}
       >
-        <img
-          src={assetUrl('assets/cropped/sotay-full-icon.png')}
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = assetUrl('assets/sotay.PNG');
-          }}
-          alt="Kiến Thức"
-          style={{
-            width: '120px',
-            height: '120px',
-            objectFit: 'contain',
-            display: 'block',
-          }}
-        />
+        <FintechIcon name="guide" size={18} color="#FBBF24" />
+        <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#F8FAFC' }}>
+          Sổ tay & Luật chơi
+        </span>
       </button>
     </div>
   );

@@ -8,9 +8,8 @@ import { boardFor, MULTI_COURSE_B18_BOARD } from '../../../src/data/board';
 import { tileDisplayLabel } from '../../../src/components/player-language';
 import type { GameState } from '../../../src/game/types';
 import { sound } from '../utils/audio';
-import { assetUrl } from '../utils/assets';
+import { FintechIcon, type FintechIconName } from './FintechIcon';
 
-// Hàm rút gọn số tiền sang đơn vị M/k giúp tiết kiệm diện tích tối đa trên giao diện giấy kem
 const formatCompactMoney = (value: number): string => {
   if (value >= 1_000_000) {
     const m = value / 1_000_000;
@@ -30,146 +29,34 @@ interface UnifiedGameGuideProps {
   initialTab?: number;
 }
 
-interface ChapterIconProps {
-  src: string;
-  alt: string;
-  size?: number;
-  glowColor?: string;
-  style?: React.CSSProperties;
+interface GuideTabDef {
+  id: number;
+  label: string;
+  title: string;
+  icon: FintechIconName;
+  accent: string;
 }
 
-const ChapterIcon: React.FC<ChapterIconProps> = ({
-  src,
-  alt,
-  size = 28,
-  glowColor,
-  style = {},
-}) => {
-  return (
-    <img
-      src={src}
-      alt={alt}
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        objectFit: 'contain',
-        flexShrink: 0,
-        verticalAlign: 'middle',
-        filter: glowColor
-          ? `drop-shadow(0 3px 6px ${glowColor}) drop-shadow(0 1px 2px rgba(0,0,0,0.3))`
-          : 'drop-shadow(0 2px 4px rgba(0,0,0,0.25))',
-        transition: 'transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        ...style,
-      }}
-    />
-  );
-};
-
-const chapters = [
-  {
-    id: 0,
-    tabNum: '1',
-    tabColorClass: 'tab-red',
-    chapterLabel: 'CHƯƠNG 1',
-    title: 'Đích Đến 90M',
-    icon: '🏆',
-    iconAsset: assetUrl('assets/champion-icon.png'),
-    primaryColor: '#e11d48',
-    gradient: 'linear-gradient(135deg, #ff2e93 0%, #e11d48 100%)',
-    borderColor: '#fda4af',
-    glowColor: 'rgba(255, 46, 147, 0.45)',
-    accentBg: 'rgba(255, 241, 242, 0.95)',
-  },
-  {
-    id: 1,
-    tabNum: '2',
-    tabColorClass: 'tab-green',
-    chapterLabel: 'CHƯƠNG 2',
-    title: 'Bàn Cờ Cơ Hội',
-    icon: '🗺️',
-    iconAsset: assetUrl('assets/game-category-icon.png'),
-    primaryColor: '#059669',
-    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-    borderColor: '#a7f3d0',
-    glowColor: 'rgba(168, 85, 247, 0.45)',
-    accentBg: 'rgba(240, 253, 244, 0.95)',
-  },
-  {
-    id: 2,
-    tabNum: '3',
-    tabColorClass: 'tab-blue',
-    chapterLabel: 'CHƯƠNG 3',
-    title: 'Quy Trình Lượt Chơi',
-    icon: '⚡',
-    iconAsset: assetUrl('assets/game-rule.png'),
-    primaryColor: '#2563eb',
-    gradient: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
-    borderColor: '#bae6fd',
-    glowColor: 'rgba(14, 165, 233, 0.45)',
-    accentBg: 'rgba(240, 249, 255, 0.95)',
-  },
-  {
-    id: 3,
-    tabNum: '4',
-    tabColorClass: 'tab-amber',
-    chapterLabel: 'CHƯƠNG 4',
-    title: 'Phân Bổ Danh Mục',
-    icon: '📖',
-    iconAsset: assetUrl('assets/knowledge-icon.png'),
-    primaryColor: '#7c3aed',
-    gradient: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
-    borderColor: '#e9d5ff',
-    glowColor: 'rgba(168, 85, 247, 0.45)',
-    accentBg: 'rgba(250, 245, 255, 0.95)',
-  },
-  {
-    id: 4,
-    tabNum: '5',
-    tabColorClass: 'tab-slate',
-    chapterLabel: 'CHƯƠNG 5',
-    title: 'Phòng Thủ & Về Đích',
-    icon: '🔥',
-    iconAsset: assetUrl('assets/game-defense-icon.png'),
-    primaryColor: '#ea580c',
-    gradient: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
-    borderColor: '#fde68a',
-    glowColor: 'rgba(245, 158, 11, 0.45)',
-    accentBg: 'rgba(255, 251, 235, 0.95)',
-  },
+const GUIDE_TABS: GuideTabDef[] = [
+  { id: 0, label: 'Mục tiêu', title: 'Lộ Trình 3 Chương', icon: 'goal', accent: '#10B981' },
+  { id: 1, label: 'Bàn cờ', title: '18 Ô Bàn Cờ B18', icon: 'map', accent: '#38BDF8' },
+  { id: 2, label: 'Luật chơi', title: 'Quy Trình Lượt Chơi', icon: 'round', accent: '#8B5CF6' },
+  { id: 3, label: 'Kênh đầu tư', title: '5 Kênh Tài Sản', icon: 'stocks', accent: '#F59E0B' },
+  { id: 4, label: 'Bẫy & Rủi ro', title: '6 Bẫy Tài Chính', icon: 'margin', accent: '#EF4444' },
 ];
 
 export function UnifiedGameGuide({ firstTime = false, onClose, game, initialTab = 0 }: UnifiedGameGuideProps) {
-  const [currentTab, setCurrentTab] = useState(initialTab);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
+  const [currentTab, setCurrentTab] = useState(() => Math.max(0, Math.min(GUIDE_TABS.length - 1, initialTab)));
   const scrollRef = useRef<HTMLDivElement>(null);
   const living = livingPresentation(game);
   const board = game ? boardFor(game) : MULTI_COURSE_B18_BOARD;
+  const activeTab = GUIDE_TABS[currentTab];
 
-  const activeChapter = chapters[currentTab];
-
-  const navigateTo = (tabIndex: number) => {
-    const valid = Math.max(0, Math.min(chapters.length - 1, tabIndex));
+  const navigateTo = (idx: number) => {
+    const valid = Math.max(0, Math.min(GUIDE_TABS.length - 1, idx));
     sound.playClick();
     setCurrentTab(valid);
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-    headingRef.current?.focus({ preventScroll: true });
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX === null) return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const deltaX = touchEndX - touchStartX;
-    setTouchStartX(null);
-    if (deltaX < -45 && currentTab < chapters.length - 1) {
-      navigateTo(currentTab + 1);
-    } else if (deltaX > 45 && currentTab > 0) {
-      navigateTo(currentTab - 1);
-    }
   };
 
   return (
@@ -179,16 +66,12 @@ export function UnifiedGameGuide({ firstTime = false, onClose, game, initialTab 
         inset: 0,
         zIndex: 1000,
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '12px 10px',
-        background: 'rgba(10, 18, 30, 0.82)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        animation: 'fadeIn 0.2s ease',
-        writingMode: 'horizontal-tb',
-        textOrientation: 'mixed',
+        padding: '12px',
+        background: 'rgba(2, 6, 23, 0.8)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         pointerEvents: 'auto',
       }}
       onClick={(e) => {
@@ -198,782 +81,321 @@ export function UnifiedGameGuide({ firstTime = false, onClose, game, initialTab 
         }
       }}
     >
-      {/* Khung Sổ Tay Kiến Thức Luật Chơi - Thiết Kế Code UI Fantasy Hoàng Gia */}
       <div
-        className="guide-modal-card w-[94%] max-w-[430px] mx-auto relative flex flex-col shadow-2xl"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
         style={{
           position: 'relative',
-          width: 'min(94%, 430px)',
-          maxWidth: '430px',
-          height: 'min(88vh, 720px)',
-          maxHeight: '720px',
-          background: 'linear-gradient(180deg, #FFFDF9 0%, #FEF9EC 35%, #FDF3DA 100%)',
-          borderRadius: '24px',
-          border: '2.5px solid #D97706',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.75), 0 0 25px rgba(217, 119, 6, 0.35), inset 0 0 0 2px rgba(254, 243, 199, 0.9)',
-          boxSizing: 'border-box',
-          fontFamily: "'Fredoka', sans-serif",
-          animation: 'guideScaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          width: 'min(94vw, 420px)',
+          height: 'min(86dvh, 720px)',
+          background: '#0F172A',
+          border: '1px solid rgba(148, 163, 184, 0.25)',
+          borderRadius: '22px',
+          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.75)',
+          fontFamily: 'var(--font-sans)',
           display: 'flex',
           flexDirection: 'column',
-          userSelect: 'none',
           overflow: 'hidden',
-          writingMode: 'horizontal-tb',
-          textOrientation: 'mixed',
-          pointerEvents: 'auto',
+          color: '#F8FAFC',
         }}
       >
-        {/* Banner Ribbon Tiêu Đề Hoàng Gia & Nút Đóng */}
+        {/* Top Header */}
         <div
           style={{
-            background: 'linear-gradient(180deg, #78350F 0%, #92400E 100%)',
-            borderBottom: '2px solid #F59E0B',
-            padding: '10px 14px',
+            padding: '14px 16px 12px 16px',
+            borderBottom: '1px solid rgba(148, 163, 184, 0.16)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            boxShadow: '0 4px 12px rgba(120, 53, 15, 0.35)',
             flexShrink: 0,
-            position: 'relative',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '20px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>📜</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '10px',
+                background: 'rgba(16, 185, 129, 0.14)',
+                color: '#34D399',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FintechIcon name="guide" size={18} />
+            </span>
             <div>
-              <div
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 900,
-                  color: '#FEF3C7',
-                  letterSpacing: '0.6px',
-                  textTransform: 'uppercase',
-                  textShadow: '0 1px 3px rgba(0,0,0,0.6)',
-                  lineHeight: 1.1,
-                }}
-              >
-                Sổ Tay Luật Chơi
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2 }}>
+                Sổ Tay Chiến Lược
               </div>
-              <div
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  color: '#FDE68A',
-                  opacity: 0.9,
-                  lineHeight: 1.1,
-                  marginTop: '1px',
-                }}
-              >
-                Chương 1: Cờ Tỷ Phú B18
+              <div style={{ fontSize: '11px', fontWeight: 500, color: '#94A3B8' }}>
+                PlayBoard · 3 Chương Đầu Tư Tài Chính
               </div>
             </div>
           </div>
 
-          {/* Nút Thoát / Bỏ Qua */}
           <button
             onClick={() => {
               sound.playClick();
               onClose();
             }}
-            title={firstTime ? 'Bỏ qua hướng dẫn' : 'Đóng Sổ Tay'}
             aria-label={firstTime ? 'Bỏ qua' : 'Đóng'}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: 'rgba(254, 243, 199, 0.15)',
-              border: '1.5px solid rgba(254, 243, 199, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              padding: 0,
-              color: '#FEF3C7',
-              fontSize: '15px',
-              fontWeight: 900,
-              transition: 'transform 0.15s ease, background 0.15s ease',
-            }}
-            onPointerDown={(e) => {
-              (e.currentTarget as HTMLElement).style.transform = 'scale(0.88)';
-            }}
-            onPointerUp={(e) => {
-              (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-            }}
+            className="fintech-icon-btn"
+            style={{ width: '36px', height: '36px', borderRadius: '10px' }}
           >
-            ✕
+            <FintechIcon name="close" size={18} />
           </button>
         </div>
 
-        {/* Thanh Tab 5 Chương (1, 2, 3, 4, 5) Phong Cách Arcade 3D Pills */}
+        {/* 5 Clean Tabs */}
         <div
+          role="tablist"
           style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
             gap: '6px',
-            padding: '8px 12px 6px',
-            background: 'rgba(217, 119, 6, 0.08)',
-            borderBottom: '1.5px solid rgba(217, 119, 6, 0.2)',
+            padding: '10px 12px',
+            background: '#1E293B',
+            borderBottom: '1px solid rgba(148, 163, 184, 0.14)',
+            overflowX: 'auto',
             flexShrink: 0,
           }}
-          role="tablist"
-          aria-label="Các chương luật chơi"
         >
-          {chapters.map((ch, idx) => {
+          {GUIDE_TABS.map((tab, idx) => {
             const active = currentTab === idx;
             return (
               <button
-                key={ch.id}
+                key={tab.id}
                 role="tab"
-                id={`guide-tab-${ch.id}`}
                 aria-selected={active}
                 onClick={() => navigateTo(idx)}
-                title={ch.title}
                 style={{
-                  flex: 1,
+                  flex: '1 0 auto',
                   height: '34px',
-                  borderRadius: '10px',
-                  border: active ? '2px solid #ffffff' : `1.5px solid ${ch.borderColor}`,
-                  background: active ? ch.gradient : 'rgba(255, 255, 255, 0.85)',
-                  color: active ? '#ffffff' : ch.primaryColor,
-                  fontWeight: 800,
+                  padding: '0 10px',
+                  borderRadius: '9px',
+                  border: active ? `1px solid ${tab.accent}` : '1px solid transparent',
+                  background: active ? 'rgba(15, 23, 42, 0.9)' : 'transparent',
+                  color: active ? '#FFFFFF' : '#94A3B8',
                   fontSize: '12px',
+                  fontWeight: active ? 700 : 600,
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '4px',
-                  boxShadow: active
-                    ? `0 3px 10px ${ch.glowColor}, 0 1px 3px rgba(0,0,0,0.2)`
-                    : '0 1px 2px rgba(0,0,0,0.05)',
-                  transform: active ? 'scale(1.04)' : 'scale(1)',
-                  transition: 'all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  fontFamily: "'Fredoka', sans-serif",
+                  gap: '5px',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                <span style={{ fontSize: '13px' }}>{ch.icon}</span>
-                <span style={{ fontSize: '11.5px', whiteSpace: 'nowrap' }}>{ch.tabNum}</span>
+                <FintechIcon name={tab.icon} size={13} color={active ? tab.accent : '#64748B'} />
+                <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Thanh Điều Hướng Chương Hiện Tại (◀ Tiêu Đề ▶) */}
+        {/* Scrollable Content */}
+        <div
+          ref={scrollRef}
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            padding: '14px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            fontSize: '13px',
+            lineHeight: 1.55,
+            color: '#CBD5E1',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(148, 163, 184, 0.14)' }}>
+            <FintechIcon name={activeTab.icon} size={18} color={activeTab.accent} />
+            <h3 style={{ margin: 0, fontSize: '15.5px', fontWeight: 800, color: '#FFFFFF' }}>{activeTab.title}</h3>
+          </div>
+
+          {currentTab === 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {game && (
+                <div style={{ background: '#1E293B', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12px', color: '#94A3B8' }}>Tiến độ ván hiện tại:</span>
+                  <strong className="tabular-nums" style={{ fontSize: '13.5px', color: '#34D399' }}>
+                    {formatCompactMoney(goalProgress(game).funds)} / {formatCompactMoney(goalForGame(game).target)}
+                  </strong>
+                </div>
+              )}
+
+              <div style={{ background: '#1E293B', borderRadius: '12px', padding: '12px', border: '1px solid rgba(148, 163, 184, 0.15)' }}>
+                <div style={{ fontWeight: 700, color: '#34D399', marginBottom: '4px' }}>Chương 1: Khởi Đầu Tích Lũy (50M → 90M)</div>
+                <p>4 Vòng (4 Quý). Lương 14M, sinh hoạt phí 5M/vòng, đệm an toàn 10M. Rút tiết kiệm trước hạn mất 100% lãi.</p>
+              </div>
+
+              <div style={{ background: '#1E293B', borderRadius: '12px', padding: '12px', border: '1px solid rgba(148, 163, 184, 0.15)' }}>
+                <div style={{ fontWeight: 700, color: '#38BDF8', marginBottom: '4px' }}>Chương 2: Đòn Bẩy Tăng Trưởng (90M+ → 180M)</div>
+                <p>Kế thừa tối đa +15M thặng dư từ Ch1. Sinh hoạt phí tăng +1M lạm phát mỗi vòng. Mở khóa <strong>Thẻ Tình Huống Hệ Quả Trễ</strong> (Bảo hiểm phòng vệ vs. Cắt giảm bảo trì).</p>
+              </div>
+
+              <div style={{ background: '#1E293B', borderRadius: '12px', padding: '12px', border: '1px solid rgba(148, 163, 184, 0.15)' }}>
+                <div style={{ fontWeight: 700, color: '#FBBF24', marginBottom: '4px' }}>Chương 3: Bão Vĩ Mô & Tự Do Tài Chính (180M+ → 360M)</div>
+                <p>5 Vòng chu kỳ kinh tế, kế thừa tối đa +30M từ Ch2. Hạn mức vay đòn bẩy 120M kèm <strong>Call Margin</strong> tự động thanh lý (phạt 5%) nếu Nợ / Tài sản thanh khoản &gt; 60%.</p>
+              </div>
+            </div>
+          )}
+
+          {currentTab === 1 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <p>Bàn cờ gồm <strong>{board.length} ô</strong>. Chỉ ô dừng chân mới kích hoạt sự kiện; đi ngang qua không kích hoạt (trừ ô Xuất phát kết toán vòng).</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                {board.map((tile) => (
+                  <div
+                    key={tile.index}
+                    style={{
+                      background: '#1E293B',
+                      border: '1px solid rgba(148, 163, 184, 0.15)',
+                      borderRadius: '10px',
+                      padding: '8px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <span className="tabular-nums" style={{ fontSize: '11px', fontWeight: 800, color: '#38BDF8', minWidth: '20px' }}>
+                      #{tile.index + 1}
+                    </span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#F8FAFC', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {tile.type === 'start' ? 'Xuất phát' : tileDisplayLabel(tile.label)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentTab === 2 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ background: '#1E293B', borderRadius: '12px', padding: '12px' }}>
+                <strong style={{ color: '#FFFFFF', display: 'block', marginBottom: '4px' }}>Thứ tự tại ô Xuất phát (START)</strong>
+                <p>1. Cập nhật thị trường → 2. Nhận lương → 3. Thu nhập Tiệm kinh doanh → 4. Đáo hạn tiết kiệm & Coupon trái phiếu → 5. Trừ sinh hoạt phí ({formatCompactMoney(living.amount)}) → 6. Trả nợ/nghĩa vụ → 7. Quyền bán tài sản tài chính.</p>
+              </div>
+              <div style={{ background: '#1E293B', borderRadius: '12px', padding: '12px' }}>
+                <strong style={{ color: '#FFFFFF', display: 'block', marginBottom: '4px' }}>Nguyên tắc Huy động hợp lệ</strong>
+                <p><GlossaryText text="Chỉ tính Tiền mặt + Gốc tiết kiệm + Giá bán ròng Cổ phiếu/Vàng/Trái phiếu - Nợ. Không tính Tiệm kinh doanh chưa bán hoặc lãi sổ chưa đáo hạn." /></p>
+              </div>
+            </div>
+          )}
+
+          {currentTab === 3 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {game && <CustomerPreferenceCard game={game} />}
+              {[
+                { icon: 'bank' as const, name: 'Tiết kiệm Ngân hàng', desc: 'Kỳ hạn 1–3 vòng (lãi 4%–6%/kỳ). Rút sớm toàn khoản khi thiếu tiền sẽ mất 100% lãi.' },
+                { icon: 'stocks' as const, name: 'Cổ phiếu 3 ngành', desc: 'Công nghệ, Ngân hàng, Sản xuất. Tăng trưởng cao nhưng biến động mạnh theo cú sốc vĩ mô.' },
+                { icon: 'bonds' as const, name: 'Trái phiếu V2.5', desc: 'An Tâm (ổn định) vs. Bứt Phá (coupon cao nhưng có nguy cơ chậm trả / vỡ nợ khi thắt chặt tín dụng).' },
+                { icon: 'gold' as const, name: 'Vàng trú ẩn', desc: 'Chênh lệch mua/bán 3% + phí 1%. Thường tăng mạnh khi thị trường bất định.' },
+                { icon: 'business' as const, name: 'Tiệm kinh doanh', desc: 'Tạo dòng tiền mỗi vòng, nhưng bị khóa thanh khoản: chỉ bán được khi dừng đúng ô Kinh doanh.' },
+              ].map((item) => (
+                <div key={item.name} style={{ background: '#1E293B', borderRadius: '12px', padding: '10px 12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                  <span style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.14)', color: '#FBBF24', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <FintechIcon name={item.icon} size={16} />
+                  </span>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>{item.name}</div>
+                    <div style={{ fontSize: '12px', color: '#94A3B8' }}>{item.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {currentTab === 4 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '12px' }}>
+                <strong style={{ color: '#FCA5A5', display: 'block', marginBottom: '4px' }}>6 Khúc Mắc Cần Giải Đố</strong>
+                <ul style={{ paddingLeft: '16px', margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <li><strong>Bẫy thanh khoản:</strong> Hết tiền mặt bị ép rút sổ mất lãi hoặc vay 10%/vòng.</li>
+                  <li><strong>Rủi ro tín dụng:</strong> Trái phiếu lãi cao dễ chậm trả/vỡ nợ khi thắt chặt tín dụng.</li>
+                  <li><strong>Chi phí cơ hội:</strong> Mua khóa học hay gửi kỳ hạn 3 vòng quá muộn sẽ không kịp hoàn vốn.</li>
+                  <li><strong>Đảo chiều vĩ mô:</strong> Đu đỉnh một kênh không phòng vệ bằng Vàng/Tiết kiệm.</li>
+                  <li><strong>Quyết toán vòng cuối:</strong> Quên bán Tiệm kinh doanh trước khi về đích.</li>
+                  <li><strong>Lạm phát & Call Margin:</strong> Cắt giảm bảo trì giảm 35% doanh thu; nợ vượt 60% tài sản bị bán cưỡng chế phạt 5%.</li>
+                </ul>
+              </div>
+              <div style={{ background: '#1E293B', borderRadius: '12px', padding: '12px' }}>
+                <FinancialGlossary />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Footer CTA */}
         <div
           style={{
-            padding: '8px 14px 6px',
+            padding: '12px 16px',
+            borderTop: '1px solid rgba(148, 163, 184, 0.16)',
+            background: '#0F172A',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '8px',
-            borderBottom: '1px dashed rgba(217, 119, 6, 0.25)',
+            gap: '10px',
             flexShrink: 0,
           }}
         >
           <button
             onClick={() => navigateTo(currentTab - 1)}
             disabled={currentTab === 0}
-            title="Chương trước"
-            aria-label="Chương trước"
+            className="fintech-icon-btn"
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: currentTab === 0 ? 'rgba(0,0,0,0.04)' : 'rgba(217, 119, 6, 0.15)',
-              border: currentTab === 0 ? '1px solid rgba(0,0,0,0.06)' : '1.5px solid rgba(217, 119, 6, 0.35)',
-              color: currentTab === 0 ? '#9ca3af' : '#78350F',
-              cursor: currentTab === 0 ? 'default' : 'pointer',
-              fontWeight: 900,
+              height: '42px',
+              padding: '0 14px',
               fontSize: '13px',
-              transition: 'all 0.15s ease',
-              flexShrink: 0,
-            }}
-            onPointerDown={(e) => {
-              if (currentTab > 0) (e.currentTarget as HTMLElement).style.transform = 'scale(0.9)';
-            }}
-            onPointerUp={(e) => {
-              (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+              fontWeight: 700,
+              opacity: currentTab === 0 ? 0.4 : 1,
+              cursor: currentTab === 0 ? 'not-allowed' : 'pointer',
             }}
           >
-            ◀
+            Trước
           </button>
 
-          <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-            <div
+          {currentTab < GUIDE_TABS.length - 1 ? (
+            <button
+              onClick={() => navigateTo(currentTab + 1)}
               style={{
-                fontSize: '10px',
-                fontWeight: 800,
-                color: activeChapter.primaryColor,
-                textTransform: 'uppercase',
-                letterSpacing: '0.8px',
+                flex: 1,
+                height: '42px',
+                borderRadius: '12px',
+                border: 'none',
+                background: '#10B981',
+                color: '#FFFFFF',
+                fontSize: '13.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
               }}
             >
-              {activeChapter.chapterLabel} ({currentTab + 1}/{chapters.length})
-            </div>
-            <h2
-              ref={headingRef}
-              tabIndex={-1}
+              Tiếp theo ({currentTab + 1}/{GUIDE_TABS.length})
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                sound.playClick();
+                onClose();
+              }}
               style={{
-                margin: 0,
-                fontSize: 'clamp(14px, 4vw, 16px)',
-                fontWeight: 900,
-                color: '#1e1b4b',
-                lineHeight: 1.25,
-                textShadow: '0 1px 0 rgba(255, 255, 255, 0.8)',
-                fontFamily: "'Fredoka', sans-serif",
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
+                flex: 1,
+                height: '42px',
+                borderRadius: '12px',
+                border: 'none',
+                background: '#10B981',
+                color: '#FFFFFF',
+                fontSize: '13.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
               }}
             >
-              <ChapterIcon
-                src={activeChapter.iconAsset}
-                alt={activeChapter.title}
-                size={24}
-                glowColor={activeChapter.glowColor}
-              />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {activeChapter.title}
-              </span>
-            </h2>
-          </div>
-
-          <button
-            onClick={() => navigateTo(currentTab + 1)}
-            disabled={currentTab === chapters.length - 1}
-            title="Chương sau"
-            aria-label="Chương sau"
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: currentTab === chapters.length - 1 ? 'rgba(0,0,0,0.04)' : 'rgba(217, 119, 6, 0.15)',
-              border: currentTab === chapters.length - 1 ? '1px solid rgba(0,0,0,0.06)' : '1.5px solid rgba(217, 119, 6, 0.35)',
-              color: currentTab === chapters.length - 1 ? '#9ca3af' : '#78350F',
-              cursor: currentTab === chapters.length - 1 ? 'default' : 'pointer',
-              fontWeight: 900,
-              fontSize: '13px',
-              transition: 'all 0.15s ease',
-              flexShrink: 0,
-            }}
-            onPointerDown={(e) => {
-              if (currentTab < chapters.length - 1)
-                (e.currentTarget as HTMLElement).style.transform = 'scale(0.9)';
-            }}
-            onPointerUp={(e) => {
-              (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-            }}
-          >
-            ▶
-          </button>
+              {firstTime ? 'Bắt đầu chơi ngay' : 'Đã hiểu'}
+            </button>
+          )}
         </div>
-
-        {/* Vùng Cuộn Nội Dung Chính - Chiếm trọn không gian, có animation chuyển mượt */}
-        <div
-          ref={scrollRef}
-          key={currentTab}
-          className="arcade-scrollbar guide-antique-narrative-area"
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-            padding: '10px 14px 14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            color: '#2b1406',
-            fontSize: '12.5px',
-            lineHeight: 1.45,
-            wordBreak: 'break-word',
-            overflowWrap: 'break-word',
-            fontFamily: "'Fredoka', sans-serif",
-            animation: 'chapterSlideFade 0.22s cubic-bezier(0.2, 0.9, 0.4, 1.0)',
-          }}
-        >
-            {/* CHƯƠNG 1: ĐÍCH ĐẾN 90M (90M GOAL) */}
-            {currentTab === 0 && (
-              <>
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(255, 241, 242, 0.95) 0%, rgba(254, 205, 211, 0.9) 100%)',
-                    border: '1.5px solid #ff2e93',
-                    borderRadius: '10px',
-                    padding: '8px 12px',
-                    textAlign: 'center',
-                    boxShadow: '0 2px 8px rgba(255, 46, 147, 0.2)',
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: '12px', color: '#881337', fontWeight: 700, lineHeight: 1.45 }}>
-                    Khởi đầu 50M · Đúng 4 vòng chơi · Mục tiêu 90M (80M tích lũy + 10M quỹ dự phòng).
-                  </p>
-                </div>
-
-                <div style={{ fontSize: '11.5px' }}>
-                  <p style={{ margin: '4px 0 2px', fontWeight: 800, color: '#4c0519' }}>
-                    Công thức nguồn tiền về đích hợp lệ:
-                  </p>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.85)',
-                      border: '1px dashed #f43f5e',
-                      borderRadius: '8px',
-                      padding: '5px 8px',
-                      lineHeight: 1.45,
-                      color: '#4c0519',
-                      fontWeight: 600,
-                    }}
-                  >
-                    <b>Tiền về đích</b> = Tiền mặt + Tiết kiệm rút được + Giá trị thanh lý chứng khoán & vàng sau phí -
-                    Nợ vay khẩn cấp.
-                  </div>
-                  <p style={{ margin: '4px 0 0', color: '#e11d48', fontSize: '11px', fontWeight: 700 }}>
-                    ⚠️ Quán kinh doanh chưa bán không được tính trực tiếp vào nguồn tiền về đích!
-                  </p>
-                </div>
-
-                <div style={{ marginTop: '4px' }}>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      border: '1px solid rgba(225, 29, 72, 0.3)',
-                      borderRadius: '8px',
-                      padding: '6px 8px',
-                      fontSize: '11px',
-                      color: '#4c0519',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800 }}>
-                      <span>🚩</span>
-                      <span>
-                        Tích lũy đủ{' '}
-                        <strong style={{ color: '#be123c' }}>
-                          {game ? formatCompactMoney(goalForGame(game).target) : '90M'}
-                        </strong>{' '}
-                        sau {game?.totalLaps ?? 4} vòng.
-                      </span>
-                    </div>
-                    {game && (() => {
-                      const progress = goalProgress(game);
-                      if (!progress) return null;
-                      return (
-                        <p style={{ margin: '4px 0 0', fontWeight: 600 }}>
-                          Hiện có thể huy động{' '}
-                          <strong style={{ color: '#059669' }}>{formatCompactMoney(progress.funds)}</strong> ·{' '}
-                          {progress.remaining > 0
-                            ? `Còn ${formatCompactMoney(progress.remaining)} để đạt mục tiêu.`
-                            : 'Đã đạt ngưỡng tài chính; hoàn thành các vòng để về đích!'}
-                        </p>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* CHƯƠNG 2: BÀN CỜ CƠ HỘI (BOARD & RULES) */}
-            {currentTab === 1 && (
-              <>
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.95) 0%, rgba(187, 247, 208, 0.9) 100%)',
-                    border: '1.5px solid #10b981',
-                    borderRadius: '10px',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)',
-                  }}
-                >
-                  <p style={{ margin: 0, fontWeight: 800, color: '#065f46' }}>
-                    🎮 <b>Bàn cờ {game?.boardLayout ?? 'B18'} Isometric ({board.length} ô):</b>
-                  </p>
-                  <ul style={{ margin: '4px 0 0', paddingLeft: '16px', color: '#064e3b', fontWeight: 600 }}>
-                    <li>Bàn cờ khép kín {board.length} ô chạy theo chiều kim đồng hồ.</li>
-                    <li>
-                      Lương <b>14M</b> nhận tại ô Xuất phát mỗi khi hoàn thành một vòng.
-                    </li>
-                    <li>Mỗi vòng chơi gieo xúc xắc 1 viên 6 mặt (1-6) không giới hạn lượt.</li>
-                    <li>Chạm vào từng ô trên bàn cờ để tra cứu nhanh thông tin cơ hội.</li>
-                  </ul>
-                </div>
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                    gap: '4px',
-                    marginTop: '2px',
-                  }}
-                >
-                  {board.map((t) => (
-                    <div
-                      key={t.index}
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.85)',
-                        border: '1px solid rgba(16, 185, 129, 0.4)',
-                        borderRadius: '6px',
-                        padding: '3px 6px',
-                        fontSize: 'clamp(9.5px, 2.6vw, 11px)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        overflow: 'hidden',
-                        minWidth: 0,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                      }}
-                    >
-                      <strong style={{ color: '#059669', flexShrink: 0 }}>{t.index + 1}.</strong>
-                      <span
-                        style={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          minWidth: 0,
-                          flex: 1,
-                          fontWeight: 700,
-                          color: '#064e3b',
-                        }}
-                      >
-                        {tileDisplayLabel(t.label)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* CHƯƠNG 3: QUY TRÌNH LƯỢT CHƠI (TURN WORKFLOW) */}
-            {currentTab === 2 && (
-              <>
-                <p style={{ margin: '0 0 4px', fontSize: '11.5px', fontWeight: 700, color: '#1e3a8a' }}>
-                  <GlossaryText text="Quy trình mỗi lượt chơi gồm 3 bước tuần tự rõ ràng:" />
-                </p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.88)',
-                      border: '1.5px solid #38bdf8',
-                      borderRadius: '8px',
-                      padding: '6px 8px',
-                      boxShadow: '0 2px 6px rgba(14, 165, 233, 0.15)',
-                    }}
-                  >
-                    <b style={{ color: '#0284c7' }}>1. Gieo xúc xắc:</b> Chạm nút xúc xắc trung tâm để nhận bước tiến ngẫu nhiên từ 1 đến 6.
-                  </div>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.88)',
-                      border: '1.5px solid #34d399',
-                      borderRadius: '8px',
-                      padding: '6px 8px',
-                      boxShadow: '0 2px 6px rgba(16, 185, 129, 0.15)',
-                    }}
-                  >
-                    <b style={{ color: '#059669' }}>2. Di chuyển quân cờ:</b> Nhân vật nhảy nhót trực quan qua từng ô theo chiều kim đồng hồ.
-                  </div>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.88)',
-                      border: '1.5px solid #818cf8',
-                      borderRadius: '8px',
-                      padding: '6px 8px',
-                      boxShadow: '0 2px 6px rgba(99, 102, 241, 0.15)',
-                    }}
-                  >
-                    <b style={{ color: '#4338ca' }}>3. Hành động ô dừng chân:</b> Chỉ ô bạn dừng chân mới kích hoạt sự kiện; đi ngang qua không kích hoạt. Mỗi lần ghé ô Cổ phiếu, Vàng hoặc Trái phiếu được tối đa 1 giao dịch mua hoặc bán.
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(240, 249, 255, 0.95) 0%, rgba(224, 242, 254, 0.9) 100%)',
-                    border: '1px dashed #0284c7',
-                    borderRadius: '8px',
-                    padding: '5px 8px',
-                    fontSize: '11px',
-                    marginTop: '2px',
-                    color: '#075985',
-                    fontWeight: 600,
-                  }}
-                >
-                  📰 <b>Đầu mỗi vòng mới:</b> Bản tin thị trường mở ra để dự báo biến động giá và lãi suất toàn thị trường.
-                </div>
-              </>
-            )}
-
-            {/* CHƯƠNG 4: PHÂN BỔ DANH MỤC (FINANCIAL PORTFOLIO) */}
-            {currentTab === 3 && (
-              <>
-                <p style={{ margin: '0 0 4px', fontSize: '11.5px', fontWeight: 700, color: '#581c87' }}>
-                  Hệ thống Drawer Portfolio gồm 6 kênh tài chính chính thức:
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.88)',
-                      border: '1px solid #86efac',
-                      borderRadius: '6px',
-                      padding: '4px 6px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#14532d',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <img src={assetUrl('assets/money-icon.png')} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain', flexShrink: 0 }} />
-                    <span><b style={{ color: '#16a34a' }}>Tiền mặt:</b> Dùng ngay, thanh toán sinh hoạt phí và chớp cơ hội mua tài sản giá tốt.</span>
-                  </div>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.88)',
-                      border: '1px solid #93c5fd',
-                      borderRadius: '6px',
-                      padding: '4px 6px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#1e3a8a',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <img src={assetUrl('assets/wallet.png')} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain', flexShrink: 0 }} />
-                    <span><b style={{ color: '#2563eb' }}>Tiết kiệm:</b> Kỳ hạn 1 / 2 / 3 vòng, lãi suất 4% - 18%, an toàn tuyệt đối.</span>
-                  </div>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.88)',
-                      border: '1px solid #c084fc',
-                      borderRadius: '6px',
-                      padding: '4px 6px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#581c87',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <img src={assetUrl('assets/stock-icon.png')} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain', flexShrink: 0 }} />
-                    <span><b style={{ color: '#9333ea' }}>Cổ phiếu:</b> Sinh lời cao theo sóng thị trường, thanh khoản linh hoạt sau phí bán.</span>
-                  </div>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.88)',
-                      border: '1px solid #fcd34d',
-                      borderRadius: '6px',
-                      padding: '4px 6px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#78350f',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <img src={assetUrl('assets/bond-icon.png')} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain', flexShrink: 0 }} />
-                    <span><b style={{ color: '#d97706' }}>Trái phiếu:</b> Lãi coupon định kỳ tại ô Xuất phát, chú ý rủi ro tổ chức phát hành.</span>
-                  </div>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.88)',
-                      border: '1px solid #fdba74',
-                      borderRadius: '6px',
-                      padding: '4px 6px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#7c2d12',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <img src={assetUrl('assets/gold-icon.png')} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain', flexShrink: 0 }} />
-                    <span><b style={{ color: '#ea580c' }}>Vàng:</b> Kênh trú ẩn phòng thủ an toàn khi kinh tế gặp cú sốc vĩ mô.</span>
-                  </div>
-                  <div
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.88)',
-                      border: '1px solid #f472b6',
-                      borderRadius: '6px',
-                      padding: '4px 6px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#831843',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <img src={assetUrl('assets/shop-icon.png')} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain', flexShrink: 0 }} />
-                    <span><b style={{ color: '#db2777' }}>Quán F&B:</b> Mua 20M, nâng cấp tối đa 6 tầng (+5M/tầng) đem lại dòng tiền thụ động lớn.</span>
-                  </div>
-                </div>
-
-                {game && <CustomerPreferenceCard game={game} showUpgrades />}
-                <FinancialGlossary />
-              </>
-            )}
-
-            {/* CHƯƠNG 5: PHÒNG THỦ & VỀ ĐÍCH (STRATEGIES & RISK) */}
-            {currentTab === 4 && (
-              <>
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(255, 251, 235, 0.95) 0%, rgba(254, 243, 199, 0.9) 100%)',
-                    border: '1.5px solid #f59e0b',
-                    borderRadius: '10px',
-                    padding: '6px 8px',
-                    fontSize: '11.5px',
-                    boxShadow: '0 2px 8px rgba(245, 158, 11, 0.2)',
-                  }}
-                >
-                  <p style={{ margin: '0 0 3px', fontWeight: 800, color: '#92400e' }}>
-                    🛡️ Quản trị sinh hoạt phí & Nợ vay:
-                  </p>
-                  <p style={{ margin: '0 0 3px', color: '#78350f', fontWeight: 600 }}>
-                    Sinh hoạt phí định kỳ: <strong style={{ color: '#b91c1c' }}>{formatCompactMoney(living.amount)}</strong>. Hãy luôn giữ tiền mặt dự phòng trước khi qua ô Xuất phát.
-                  </p>
-                  <p style={{ margin: 0, color: '#78350f', fontWeight: 600 }}>
-                    Hạn mức vay khẩn cấp tối đa <b>30M</b> với lãi suất <b>10%/vòng</b>. Nếu hết hạn mức vay và không còn tài sản thanh lý, bạn sẽ rơi vào tình trạng vỡ nợ (Insolvency).
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    background: 'rgba(254, 242, 242, 0.92)',
-                    border: '1px solid #f87171',
-                    borderRadius: '8px',
-                    padding: '5px 8px',
-                    fontSize: '11px',
-                    color: '#7f1d1d',
-                  }}
-                >
-                  <b style={{ color: '#b91c1c' }}>⚡ 3 Cú sốc vĩ mô cần lưu ý:</b>
-                  <ul style={{ margin: '2px 0 0', paddingLeft: '14px', fontWeight: 600 }}>
-                    <li><b>Thắt chặt tín dụng:</b> Cổ phiếu & trái phiếu giảm; vàng tăng mạnh.</li>
-                    <li><b>Bùng nổ nhu cầu:</b> Cổ phiếu tăng, quán đông khách; vàng giảm.</li>
-                    <li><b>Phục hồi cung ứng:</b> Thị trường phân hóa, lạm phát hạ nhiệt.</li>
-                  </ul>
-                </div>
-
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(255, 237, 213, 0.95) 0%, rgba(254, 215, 170, 0.9) 100%)',
-                    border: '1.5px solid #ea580c',
-                    borderRadius: '8px',
-                    padding: '5px 8px',
-                    fontSize: '11.5px',
-                    color: '#7c2d12',
-                    fontWeight: 700,
-                  }}
-                >
-                  <b>💡 Bí quyết về đích 90M:</b> Đầu tư quán F&B vòng 1-2 để lấy dòng tiền; vòng 3 lướt sóng tài chính; vòng 4 chốt lời toàn bộ và trả sạch nợ vay!
-                </div>
-              </>
-            )}
-
-            {/* Nút Hành Động (CTA Button) Cuộn Mượt Cùng Nội Dung Chương */}
-            <div
-              style={{
-                paddingTop: '8px',
-                paddingBottom: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginTop: 'auto',
-              }}
-            >
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  if (currentTab === chapters.length - 1) {
-                    onClose();
-                  } else {
-                    navigateTo(currentTab + 1);
-                  }
-                }}
-                style={{
-                  background:
-                    currentTab === chapters.length - 1
-                      ? 'linear-gradient(180deg, #FCD34D 0%, #F59E0B 45%, #D97706 100%)'
-                      : activeChapter.gradient,
-                  color: currentTab === chapters.length - 1 ? '#381F0B' : '#ffffff',
-                  border: currentTab === chapters.length - 1 ? '2px solid #FEF3C7' : '2px solid #ffffff',
-                  borderRadius: '999px',
-                  padding: currentTab === chapters.length - 1 ? '8px 28px' : '7px 22px',
-                  fontSize: currentTab === chapters.length - 1 ? '13.5px' : '12.5px',
-                  fontWeight: 900,
-                  cursor: 'pointer',
-                  boxShadow:
-                    currentTab === chapters.length - 1
-                      ? '0 4px 16px rgba(245, 158, 11, 0.6), 0 2px 6px rgba(0,0,0,0.3)'
-                      : `0 4px 10px ${activeChapter.glowColor}, 0 2px 4px rgba(0,0,0,0.25)`,
-                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.4px',
-                  textShadow:
-                    currentTab === chapters.length - 1
-                      ? '0 1px 1px rgba(255,255,255,0.6)'
-                      : '0 1px 2px rgba(0,0,0,0.35)',
-                  fontFamily: "'Fredoka', sans-serif",
-                }}
-                onPointerDown={(e) => {
-                  (e.currentTarget as HTMLElement).style.transform = 'scale(0.94)';
-                }}
-                onPointerUp={(e) => {
-                  (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-                }}
-              >
-                {currentTab === chapters.length - 1
-                  ? 'BƯỚC VÀO BÀN CỜ ➔'
-                  : 'Chương Tiếp Theo ➔'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes guideScaleUp {
-          from { transform: scale(0.92); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        @keyframes chapterSlideFade {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .arcade-scrollbar::-webkit-scrollbar {
-          width: 5px;
-        }
-        .arcade-scrollbar::-webkit-scrollbar-track {
-          background: rgba(217, 119, 6, 0.08);
-          border-radius: 4px;
-        }
-        .arcade-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(217, 119, 6, 0.35);
-          border-radius: 4px;
-        }
-        .arcade-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(217, 119, 6, 0.6);
-        }
-      `}</style>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { money } from '../../../src/game/format'
-import { assetUrl } from '../utils/assets'
+import { FintechIcon } from './FintechIcon'
 
 interface TopHudProps {
   cash: number
@@ -54,26 +54,25 @@ export function TopHud({
 
   return (
     <header
-      className="mobile-hud w-full px-3 pt-2 flex flex-col space-y-2 select-none"
+      className="mobile-hud select-none"
       style={{
         position: 'absolute',
-        top: 'max(16px, env(safe-area-inset-top, 16px))',
+        top: 'max(12px, env(safe-area-inset-top, 12px))',
         left: '12px',
         right: '12px',
         zIndex: 30,
-        background: 'transparent',
-        border: 'none',
-        boxShadow: 'none',
-        padding: '0',
-        color: '#fcf5e5',
-        fontFamily: "'Fredoka', sans-serif",
+        color: '#F8FAFC',
+        fontFamily: 'var(--font-sans)',
         boxSizing: 'border-box',
         pointerEvents: 'auto',
-        maxWidth: '440px',
+        maxWidth: '420px',
         margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
       }}
     >
-      {/* ROW 1: TOP BAR (Home/Logo - Balance Vault Capsule - Sound & Settings Utilities) */}
+      {/* ROW 1: Home/Brand — Cash Capsule — Sound & Settings */}
       <div
         className="hud-row"
         style={{
@@ -82,301 +81,149 @@ export function TopHud({
           justifyContent: 'space-between',
           gap: '8px',
           width: '100%',
-          boxSizing: 'border-box',
         }}
       >
-        {/* Left Slot: Game Brand / Home Button */}
+        {onHome ? (
+          <button
+            onClick={onHome}
+            title="Quay lại Bản đồ"
+            aria-label="Quay lại Bản đồ"
+            className="fintech-icon-btn"
+            style={{ width: '40px', height: '40px', flexShrink: 0 }}
+          >
+            <FintechIcon name="home" size={18} />
+          </button>
+        ) : (
+          <div
+            className="fintech-icon-btn"
+            style={{ width: '40px', height: '40px', flexShrink: 0, cursor: 'default', color: '#10B981' }}
+          >
+            <FintechIcon name="stocks" size={18} />
+          </div>
+        )}
+
+        {/* Cash Balance Pill */}
         <div
-          className="hud-logo-slot"
+          className={`hud-cash-capsule ${isDanger ? 'hud-cash-danger-pulse' : ''}`}
+          title={isDanger ? `CẢNH BÁO: Đệm tiền mặt dưới ngưỡng an toàn (${money(cash)})` : `Tiền mặt hiện có: ${money(cash)}`}
           style={{
             display: 'flex',
             alignItems: 'center',
-            flexShrink: 0,
+            justifyContent: 'space-between',
+            gap: '8px',
+            background: 'rgba(15, 23, 42, 0.84)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: isDanger ? '1px solid rgba(239, 68, 68, 0.7)' : '1px solid rgba(148, 163, 184, 0.25)',
+            borderRadius: '14px',
+            padding: '6px 12px',
+            boxShadow: '0 6px 18px rgba(0, 0, 0, 0.4)',
+            minWidth: 0,
+            flex: '1 1 auto',
+            height: '40px',
           }}
         >
-          {onHome ? (
-            <button
-              onClick={onHome}
-              title="Quay lại Bản đồ"
-              aria-label="Quay lại Bản đồ"
-              className="medieval-icon-btn"
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <span
               style={{
-                width: 'clamp(36px, 9.5vw, 42px)',
-                height: 'clamp(36px, 9.5vw, 42px)',
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
+                width: '26px',
+                height: '26px',
+                borderRadius: '8px',
+                background: isDanger ? 'rgba(239, 68, 68, 0.16)' : 'rgba(16, 185, 129, 0.16)',
+                color: isDanger ? '#F87171' : '#34D399',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))',
-                transition: 'transform 0.12s ease',
-              }}
-              onPointerDown={(e) => {
-                e.currentTarget.style.transform = 'scale(0.92)'
-              }}
-              onPointerUp={(e) => {
-                e.currentTarget.style.transform = 'scale(1)'
               }}
             >
-              <img
-                src={assetUrl('assets/nut-home.PNG')}
-                onError={(e) => {
-                  e.currentTarget.src = assetUrl('assets/nut-home-guide.png')
-                }}
-                alt="Quay lại Bản đồ"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.45))',
-                }}
-              />
-            </button>
-          ) : (
-            <img
-              src={assetUrl('assets/cropped/app-logo.png')}
-              onError={(e) => {
-                e.currentTarget.src = assetUrl('assets/icon.PNG')
-              }}
-              alt="Mỏ Hỗn (Xoay Vòng Tiến Lui)"
-              style={{
-                height: 'clamp(34px, 9.5vw, 42px)',
-                width: 'auto',
-                objectFit: 'contain',
-                flexShrink: 0,
-                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
-              }}
-            />
-          )}
-        </div>
-
-        {/* Center Slot: Glassmorphism Cash Balance Capsule (Đã loại bỏ card bo viền nặng nề) */}
-        <div
-          className={`hud-cash-capsule ${isDanger ? 'hud-cash-danger-pulse' : ''}`}
-          title={isDanger ? `CẢNH BÁO: Đệm tiền mặt dưới 5M! (${money(cash)})` : `Tiền mặt hiện có: ${money(cash)}`}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 'clamp(6px, 2vw, 10px)',
-            background: 'rgba(15, 23, 42, 0.68)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            border: '1px solid rgba(251, 191, 36, 0.35)',
-            borderRadius: '999px',
-            padding: '3px clamp(12px, 3.2vw, 18px)',
-            boxShadow:
-              '0 4px 16px rgba(0, 0, 0, 0.55), 0 0 10px rgba(245, 158, 11, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
-            minWidth: 0,
-            flex: '1 1 auto',
-            boxSizing: 'border-box',
-          }}
-        >
-          {/* Icon Money chính thức từ app_ui_docs/images/money-icon.png */}
-          <img
-            src={assetUrl('assets/money-icon.png')}
-            alt="Tiền mặt"
-            style={{
-              width: 'clamp(26px, 6.8vw, 32px)',
-              height: 'clamp(26px, 6.8vw, 32px)',
-              objectFit: 'contain',
-              flexShrink: 0,
-              filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.55))',
-            }}
-          />
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              minWidth: 0,
-            }}
-          >
-            <span
-              style={{
-                fontSize: 'clamp(7.5px, 2vw, 9px)',
-                letterSpacing: '0.8px',
-                color: isDanger ? '#f87171' : '#fde68a',
-                fontWeight: 800,
-                lineHeight: 1,
-                fontFamily: "'Fredoka', sans-serif",
-                textTransform: 'uppercase',
-                textShadow: '0 1px 2px rgba(0,0,0,0.8)',
-              }}
-            >
-              {isDanger ? '⚠️ ĐỆM NGUY CẤP' : 'TIỀN MẶT'}
+              <FintechIcon name={isDanger ? 'warning' : 'cash'} size={15} />
             </span>
-            <strong
-              style={{
-                fontSize: 'clamp(12px, 3.3vw, 15px)',
-                fontWeight: 900,
-                color: '#ffffff',
-                textShadow: '0 2px 4px rgba(0,0,0,0.85), 0 0 8px rgba(251, 191, 36, 0.4)',
-                letterSpacing: '0.4px',
-                fontFamily: "'Fredoka', sans-serif",
-                fontVariantNumeric: 'tabular-nums',
-                whiteSpace: 'nowrap',
-                lineHeight: 1.2,
-              }}
-            >
-              {money(cash)}
-            </strong>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <span
+                style={{
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  color: isDanger ? '#FCA5A5' : '#94A3B8',
+                  lineHeight: 1.1,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {isDanger ? 'Đệm nguy cấp' : 'Tiền mặt'}
+              </span>
+              <strong
+                className="tabular-nums"
+                style={{
+                  fontSize: '13.5px',
+                  fontWeight: 800,
+                  color: '#FFFFFF',
+                  lineHeight: 1.2,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {money(cash)}
+              </strong>
+            </div>
           </div>
 
-          {/* Cảnh báo nợ vay (nếu có nợ khẩn cấp) */}
           {debt > 0 && (
             <div
-              title={`Nợ khẩn cấp: ${money(debt)}`}
+              title={`Nợ hiện tại: ${money(debt)}`}
+              className="tabular-nums"
               style={{
-                background: 'rgba(239, 68, 68, 0.9)',
-                borderRadius: '999px',
-                padding: '1.5px 6px',
-                fontSize: 'clamp(8.5px, 2.2vw, 10px)',
-                fontWeight: 900,
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '2px',
+                background: 'rgba(239, 68, 68, 0.18)',
+                border: '1px solid rgba(239, 68, 68, 0.45)',
+                borderRadius: '8px',
+                padding: '2px 7px',
+                fontSize: '10.5px',
+                fontWeight: 700,
+                color: '#FCA5A5',
                 whiteSpace: 'nowrap',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
                 flexShrink: 0,
               }}
             >
-              <span>Nợ:</span>
-              <span>-{money(debt)}</span>
+              Nợ -{money(debt)}
             </div>
           )}
         </div>
 
-        {/* Right Slot: Sound & Settings Action Utility Icons */}
-        <div
-          className="hud-actions"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'clamp(4px, 1.5vw, 8px)',
-            flexShrink: 0,
-            boxSizing: 'border-box',
-          }}
-        >
+        {/* Audio & Settings */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
           {toggleAudio && (
             <button
               onClick={toggleAudio}
-              className="medieval-icon-btn"
+              className="fintech-icon-btn"
               aria-label={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
               title={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
-              style={{
-                position: 'relative',
-                width: 'clamp(36px, 9.5vw, 42px)',
-                height: 'clamp(36px, 9.5vw, 42px)',
-                padding: 0,
-                flexShrink: 0,
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))',
-                transition: 'transform 0.12s ease',
-              }}
-              onPointerDown={(e) => {
-                e.currentTarget.style.transform = 'scale(0.92)'
-              }}
-              onPointerUp={(e) => {
-                e.currentTarget.style.transform = 'scale(1)'
-              }}
+              style={{ width: '40px', height: '40px', color: isMuted ? '#94A3B8' : '#F8FAFC' }}
             >
-              <img
-                src={assetUrl('assets/cropped/sound-btn.png')}
-                onError={(e) => {
-                  e.currentTarget.src = assetUrl('assets/sound-btn.png')
-                }}
-                alt="Âm thanh"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  filter: isMuted ? 'grayscale(0.8) opacity(0.6)' : 'none',
-                }}
-              />
-              {isMuted && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    fontSize: '18px',
-                    color: '#ef4444',
-                    fontWeight: 900,
-                    textShadow: '0 0 4px #000000',
-                    lineHeight: 1,
-                  }}
-                >
-                  ✕
-                </span>
-              )}
+              <FintechIcon name={isMuted ? 'soundOff' : 'soundOn'} size={18} />
             </button>
           )}
-
           {onOpenSettings && (
             <button
               onClick={onOpenSettings}
-              className="medieval-icon-btn"
+              className="fintech-icon-btn"
               aria-label="Cài đặt"
               title="Cài đặt"
-              style={{
-                width: 'clamp(36px, 9.5vw, 42px)',
-                height: 'clamp(36px, 9.5vw, 42px)',
-                padding: 0,
-                flexShrink: 0,
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))',
-                transition: 'transform 0.12s ease',
-              }}
-              onPointerDown={(e) => {
-                e.currentTarget.style.transform = 'scale(0.92)'
-              }}
-              onPointerUp={(e) => {
-                e.currentTarget.style.transform = 'scale(1)'
-              }}
+              style={{ width: '40px', height: '40px' }}
             >
-              <img
-                src={assetUrl('assets/cropped/setting-btn.png')}
-                onError={(e) => {
-                  e.currentTarget.src = assetUrl('assets/setting-btn.png')
-                }}
-                alt="Cài đặt"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                }}
-              />
+              <FintechIcon name="settings" size={18} />
             </button>
           )}
         </div>
       </div>
 
-      {/* ROW 2 & ROW 3: ROUND INDICATOR & TARGET PROGRESSION SECTION */}
+      {/* ROW 2: Chapter/Round Pill & Goal Progress Pill */}
       <div
-        className="hud-layer2"
         style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '5px',
-          marginTop: '6px',
           width: '100%',
-          boxSizing: 'border-box',
         }}
       >
-        {/* ROW 2: Vòng Chơi (Trái) & Mục Tiêu 90M (Phải) — Thanh thoát, không card bo viền thô */}
         <div
           style={{
             display: 'flex',
@@ -384,152 +231,109 @@ export function TopHud({
             justifyContent: 'space-between',
             gap: '8px',
             width: '100%',
-            boxSizing: 'border-box',
           }}
         >
-          {/* Vòng Chơi với run-money-icon.png */}
           <div
             className="hud-round-section"
             data-testid="hud-sectionplay"
-            title={`Chặng hành trình 4 vòng: Vòng ${currentLap} / ${maxLap}`}
+            title={`Chương ${chapterId} — Vòng ${currentLap} / ${maxLap}`}
             style={{
-              position: 'relative',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(15, 23, 42, 0.62)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              border: '1px solid rgba(192, 132, 252, 0.35)',
-              borderRadius: '999px',
-              padding: '2.5px clamp(8px, 2.2vw, 12px)',
-              boxShadow: '0 3px 10px rgba(0, 0, 0, 0.45)',
-              boxSizing: 'border-box',
+              background: 'rgba(15, 23, 42, 0.8)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(148, 163, 184, 0.22)',
+              borderRadius: '10px',
+              padding: '4px 10px',
               flexShrink: 0,
             }}
           >
-            <img
-              src={assetUrl('assets/run-money-icon.png')}
-              alt="Vòng chơi"
-              style={{
-                width: 'clamp(18px, 4.8vw, 22px)',
-                height: 'clamp(18px, 4.8vw, 22px)',
-                objectFit: 'contain',
-                flexShrink: 0,
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
-              }}
-            />
+            <FintechIcon name="round" size={13} color="#38BDF8" />
             <span
+              className="tabular-nums"
               style={{
-                fontFamily: "'Fredoka', sans-serif",
-                fontWeight: 900,
-                fontSize: 'clamp(10px, 2.7vw, 12px)',
-                color: '#f3e8ff',
-                textShadow: '0 1.5px 3px rgba(0,0,0,0.85)',
-                lineHeight: 1,
-                letterSpacing: '0.4px',
+                fontWeight: 700,
+                fontSize: '11px',
+                color: '#E2E8F0',
+                letterSpacing: '0.03em',
                 whiteSpace: 'nowrap',
               }}
             >
-              CH{chapterId} · VÒNG {String(currentLap).padStart(2, '0')} / {String(maxLap).padStart(2, '0')}
+              CH{chapterId} · VÒNG {String(currentLap).padStart(2, '0')}/{String(maxLap).padStart(2, '0')}
             </span>
           </div>
 
-          {/* Mục Tiêu với goal-icon.png & chuẩn hóa XXM / 90M */}
           <div
             className="hud-goal"
-            title={`Tiến độ mục tiêu: ${(proceeds / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}M / ${goal / 1_000_000}M`}
+            title={`Tiến độ huy động hợp lệ: ${(proceeds / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}M / ${goal / 1_000_000}M`}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(15, 23, 42, 0.62)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              border: '1px solid rgba(251, 191, 36, 0.35)',
-              borderRadius: '999px',
-              padding: '2.5px clamp(8px, 2.2vw, 12px)',
-              boxShadow: '0 3px 10px rgba(0, 0, 0, 0.45)',
-              boxSizing: 'border-box',
+              background: 'rgba(15, 23, 42, 0.8)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              borderRadius: '10px',
+              padding: '4px 10px',
               minWidth: 0,
             }}
           >
-            <img
-              src={assetUrl('assets/goal-icon.png')}
-              alt="Mục tiêu"
-              style={{
-                width: 'clamp(18px, 4.8vw, 22px)',
-                height: 'clamp(18px, 4.8vw, 22px)',
-                objectFit: 'contain',
-                flexShrink: 0,
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
-              }}
-            />
-            <span
-              style={{
-                color: '#fde68a',
-                letterSpacing: '0.3px',
-                textShadow: '0 1.5px 3px rgba(0,0,0,0.85)',
-                fontFamily: "'Fredoka', sans-serif",
-                fontWeight: 800,
-                fontSize: 'clamp(10px, 2.7vw, 12px)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Mục Tiêu
+            <FintechIcon name="goal" size={13} color="#FBBF24" />
+            <span style={{ color: '#CBD5E1', fontWeight: 600, fontSize: '11px', whiteSpace: 'nowrap' }}>
+              Mục tiêu
             </span>
             <strong
+              className="tabular-nums"
               style={{
-                color: '#ffffff',
-                textShadow: '0 2px 4px rgba(0,0,0,0.9), 0 0 6px rgba(251, 191, 36, 0.5)',
-                fontFamily: "'Fredoka', sans-serif",
-                fontWeight: 900,
+                color: '#FFFFFF',
+                fontWeight: 800,
+                fontSize: '11.5px',
                 whiteSpace: 'nowrap',
-                flexShrink: 0,
-                fontSize: 'clamp(10.5px, 2.8vw, 12px)',
-                letterSpacing: '0.3px',
-                fontVariantNumeric: 'tabular-nums',
               }}
             >
               {(proceeds / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/{goal / 1_000_000}M
             </strong>
             {currentLap >= 2 && (
               <span
-                className="holo-trend-badge"
-                title={`Dự phóng tài sản khi hoàn thành Vòng 4: ${(projectedProceeds / 1_000_000).toFixed(0)}M`}
+                title={`Dự phóng cuối màn: ${(projectedProceeds / 1_000_000).toFixed(0)}M`}
                 style={{
-                  fontSize: '9px',
-                  padding: '1px 5px',
-                  flexShrink: 0,
-                  background: proceeds >= goal ? 'rgba(34, 197, 94, 0.45)' : undefined,
-                  borderColor: proceeds >= goal ? 'rgba(74, 222, 128, 0.75)' : undefined,
+                  fontSize: '9.5px',
+                  fontWeight: 700,
+                  padding: '1px 6px',
+                  borderRadius: '6px',
+                  background: proceeds >= goal ? 'rgba(16, 185, 129, 0.22)' : 'rgba(56, 189, 248, 0.16)',
+                  color: proceeds >= goal ? '#34D399' : '#7DD3FC',
+                  border: proceeds >= goal ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(56, 189, 248, 0.3)',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                {proceeds >= goal ? '✨ ĐẠT' : `Dự phóng ${(projectedProceeds / 1_000_000).toFixed(0)}M`}
+                {proceeds >= goal ? 'ĐẠT' : `~${(projectedProceeds / 1_000_000).toFixed(0)}M`}
               </span>
             )}
           </div>
         </div>
 
-        {/* ROW 3: Smooth Animated Target Progress Fill Bar */}
+        {/* Progress Bar */}
         <div
           style={{
             width: '100%',
-            height: '7px',
-            background: 'rgba(15, 23, 42, 0.75)',
+            height: '5px',
+            background: 'rgba(15, 23, 42, 0.78)',
             borderRadius: '999px',
-            border: '1px solid rgba(253, 230, 138, 0.4)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.65), inset 0 1px 3px rgba(0,0,0,0.9)',
+            border: '1px solid rgba(148, 163, 184, 0.2)',
             overflow: 'hidden',
-            boxSizing: 'border-box',
           }}
         >
           <div
             style={{
               width: `${progress}%`,
               height: '100%',
-              background: 'linear-gradient(90deg, #d97706 0%, #f59e0b 40%, #fbbf24 75%, #fde047 100%)',
-              boxShadow: '0 0 10px rgba(253, 224, 71, 0.85)',
+              background: proceeds >= goal
+                ? 'linear-gradient(90deg, #10B981 0%, #34D399 100%)'
+                : 'linear-gradient(90deg, #D97706 0%, #F59E0B 60%, #FBBF24 100%)',
               borderRadius: '999px',
               transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
             }}

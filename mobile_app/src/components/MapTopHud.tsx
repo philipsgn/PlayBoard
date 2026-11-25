@@ -1,6 +1,6 @@
 import React from 'react';
 import { sound } from '../utils/audio';
-import { assetUrl } from '../utils/assets';
+import { FintechIcon } from './FintechIcon';
 
 interface MapTopHudProps {
   onBack?: () => void;
@@ -20,15 +20,17 @@ export const MapTopHud: React.FC<MapTopHudProps> = ({
       className="map-top-bar w-full select-none"
       style={{
         position: 'absolute',
-        top: 'max(24px, env(safe-area-inset-top, 24px))',
+        top: 'max(14px, env(safe-area-inset-top, 14px))',
         left: 0,
         right: 0,
         width: '100%',
+        maxWidth: '420px',
+        margin: '0 auto',
         zIndex: 50,
-        padding: '0 36px',
+        padding: '0 14px',
         boxSizing: 'border-box',
         pointerEvents: 'auto',
-        fontFamily: "'Fredoka', sans-serif",
+        fontFamily: 'var(--font-sans)',
       }}
     >
       <div
@@ -39,152 +41,65 @@ export const MapTopHud: React.FC<MapTopHudProps> = ({
           width: '100%',
         }}
       >
-        {/* GÓC NGOÀI CÙNG BÊN TRÁI: LOGO THƯƠNG HIỆU CHÍNH THỨC "MỎ HỖN" */}
-        <div
+        {/* Left: Back / Brand Pill */}
+        <button
+          type="button"
           onClick={() => {
             if (onBack) {
               sound.playClick();
               onBack();
             }
           }}
-          role={onBack ? 'button' : undefined}
-          aria-label={onBack ? 'Quay lại màn hình chính' : undefined}
+          aria-label={onBack ? 'Quay lại màn hình chính' : 'PlayBoard'}
+          className="fintech-icon-btn"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.65))',
+            height: '42px',
+            padding: '0 14px',
+            gap: '8px',
+            borderRadius: '14px',
             cursor: onBack ? 'pointer' : 'default',
-            pointerEvents: 'auto',
-            transition: 'transform 0.12s ease',
-          }}
-          onPointerDown={(e) => {
-            if (onBack) (e.currentTarget as HTMLElement).style.transform = 'scale(0.94)';
-          }}
-          onPointerUp={(e) => {
-            if (onBack) (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
           }}
         >
-          <img
-            src={assetUrl('assets/cropped/app-logo.png')}
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = assetUrl('assets/icon.PNG');
-            }}
-            alt="Mỏ Hỗn (Xoay Vòng Tiến Lui)"
-            style={{
-              height: '74px',
-              width: 'auto',
-              maxWidth: '180px',
-              objectFit: 'contain',
-              display: 'block',
-            }}
-          />
-        </div>
+          {onBack && <FintechIcon name="back" size={16} color="#CBD5E1" />}
+          <FintechIcon name="stocks" size={17} color="#10B981" />
+          <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#F8FAFC', letterSpacing: '-0.01em' }}>
+            PlayBoard
+          </span>
+        </button>
 
-        {/* KHOẢNG TRỐNG CHÍNH GIỮA: HOÀN TOÀN TRỐNG ĐỂ TRÁNH DYNAMIC ISLAND & KHÔNG BỊ RỐI BỞI TIỀN/TIÊU ĐỀ */}
-        <div style={{ flex: 1 }} />
-
-        {/* GÓC NGOÀI CÙNG BÊN PHẢI: ĐỒNG BỘ 2 NÚT ĐIỀU KHIỂN (ÂM THANH + CÀI ĐẶT) CÙNG SIZE 74x74px */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        {/* Right: Sound & Settings */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {onToggleMute && (
             <button
+              type="button"
               onClick={() => {
                 sound.playClick();
                 onToggleMute();
               }}
               aria-label={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
               title={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+              className="fintech-icon-btn"
               style={{
-                width: '74px',
-                height: '74px',
-                position: 'relative',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
-                transition: 'transform 0.12s ease',
-              }}
-              onPointerDown={(e) => {
-                (e.currentTarget as HTMLElement).style.transform = 'scale(0.92)';
-              }}
-              onPointerUp={(e) => {
-                (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                width: '42px',
+                height: '42px',
+                color: isMuted ? '#94A3B8' : '#F8FAFC',
               }}
             >
-              <img
-                src={assetUrl('assets/cropped/sound-btn.png')}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = assetUrl('assets/sound-btn.png');
-                }}
-                alt="Âm thanh"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  filter: isMuted ? 'grayscale(0.8) opacity(0.6)' : 'none',
-                }}
-              />
-              {isMuted && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    fontSize: '32px',
-                    color: '#ef4444',
-                    fontWeight: 900,
-                    textShadow: '0 0 6px #000000',
-                    lineHeight: 1,
-                  }}
-                >
-                  ✕
-                </span>
-              )}
+              <FintechIcon name={isMuted ? 'soundOff' : 'soundOn'} size={18} />
             </button>
           )}
-
-          {/* Nút Cài đặt (⚙️) Đồng Bộ Kích Thước 74x74px */}
           <button
+            type="button"
             onClick={() => {
               sound.playClick();
               onOpenSettings();
             }}
-            aria-label="Cài đặt game"
+            aria-label="Cài đặt"
             title="Cài đặt"
-            style={{
-              width: '74px',
-              height: '74px',
-              position: 'relative',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
-              transition: 'transform 0.12s ease',
-            }}
-            onPointerDown={(e) => {
-              (e.currentTarget as HTMLElement).style.transform = 'scale(0.92)';
-            }}
-            onPointerUp={(e) => {
-              (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-            }}
+            className="fintech-icon-btn"
+            style={{ width: '42px', height: '42px' }}
           >
-            <img
-              src={assetUrl('assets/cropped/setting-btn.png')}
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = assetUrl('assets/setting-btn.png');
-              }}
-              alt="Cài đặt"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-              }}
-            />
+            <FintechIcon name="settings" size={18} />
           </button>
         </div>
       </div>

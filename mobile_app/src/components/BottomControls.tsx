@@ -1,6 +1,6 @@
 import React from 'react';
 import { sound } from '../utils/audio';
-import { assetUrl } from '../utils/assets';
+import { FintechIcon } from './FintechIcon';
 
 export interface BottomControlsProps {
   onRollClick?: () => void;
@@ -10,8 +10,6 @@ export interface BottomControlsProps {
   onLogClick?: () => void;
   lastDiceValue?: number;
   disabled?: boolean;
-
-  // Interface contract props
   onRollDice?: () => void;
   canRoll?: boolean;
   isRolling?: boolean;
@@ -69,7 +67,7 @@ export const BottomControls: React.FC<BottomControlsProps> = ({
         left: 0,
         right: 0,
         width: '100%',
-        maxWidth: '440px',
+        maxWidth: '420px',
         margin: '0 auto',
         zIndex: 50,
         display: 'flex',
@@ -78,250 +76,133 @@ export const BottomControls: React.FC<BottomControlsProps> = ({
         pointerEvents: 'none',
         userSelect: 'none',
         boxSizing: 'border-box',
+        padding: '0 12px max(12px, env(safe-area-inset-bottom, 12px)) 12px',
+        gap: '8px',
       }}
     >
-      {/* Hiển thị kết quả vừa gieo: Bỏ viền bo quanh xúc xắc và số, bỏ dấu ':' nằm giữa */}
       {lastDiceValue && (
         <div
           style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            marginBottom: '4px',
+            gap: '6px',
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            border: '1px solid rgba(245, 158, 11, 0.45)',
+            borderRadius: '999px',
+            padding: '4px 12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
             pointerEvents: 'none',
-            animation: 'popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            fontFamily: "'Fredoka', sans-serif",
           }}
         >
-          <img
-            src={assetUrl('assets/dice-icon.png')}
-            onError={(e) => {
-              e.currentTarget.src = assetUrl('assets/xucxac.PNG')
-            }}
-            alt="Xúc xắc"
-            style={{
-              width: '32px',
-              height: '32px',
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 10px rgba(245, 158, 11, 0.5))',
-            }}
-          />
+          <FintechIcon name="dice" size={14} color="#FBBF24" />
           <span
+            className="tabular-nums"
             style={{
-              fontSize: '28px',
-              fontWeight: 900,
-              color: '#fef08a',
-              textShadow:
-                '0 3px 6px rgba(0,0,0,0.9), 0 0 12px rgba(245, 158, 11, 0.85), -1.5px -1.5px 0 #92400e, 1.5px -1.5px 0 #92400e, -1.5px 1.5px 0 #92400e, 1.5px 1.5px 0 #92400e',
+              fontSize: '13px',
+              fontWeight: 800,
+              color: '#FEF3C7',
               lineHeight: 1,
-              fontVariantNumeric: 'tabular-nums',
             }}
           >
-            {lastDiceValue}
+            Bước {lastDiceValue}
           </span>
         </div>
       )}
 
-      {/* Floating Controls Row */}
+      {/* Fintech Bottom Action Bar */}
       <div
         style={{
           width: '100%',
-          maxWidth: '440px',
-          margin: '0 auto',
-          padding: '0 clamp(8px, 2.5vw, 16px) max(8px, env(safe-area-inset-bottom)) clamp(8px, 2.5vw, 16px)',
-          paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
           display: 'flex',
-          alignItems: 'flex-end',
+          alignItems: 'center',
           justifyContent: 'space-between',
-          boxSizing: 'border-box',
+          gap: '10px',
           pointerEvents: 'auto',
         }}
       >
-        {/* Bên Trái: Nút Túi Đồ (Icon Huy Hiệu Gỗ Túi Đồ To Đẹp) */}
+        {/* Left: Danh mục Tài sản */}
         <button
           onClick={onBagPress}
-          title="Túi Đồ (Ví Tài Sản & Nhật Ký)"
-          aria-label="Túi Đồ"
-          className="medieval-icon-btn"
+          title="Danh mục Tài sản & Nhật ký"
+          aria-label="Tài sản"
+          className="fintech-icon-btn"
           style={{
-            background: 'none',
-            border: 'none',
-            padding: '2px',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            outline: 'none',
-            marginBottom: '4px',
-            minWidth: '48px',
-            minHeight: '48px',
-            width: 'clamp(56px, 16vw, 68px)',
-            height: 'clamp(56px, 16vw, 68px)',
-            boxSizing: 'border-box',
-            filter: 'drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55))',
-            transition: 'transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = 'scale(0.92)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-          onTouchStart={(e) => {
-            e.currentTarget.style.transform = 'scale(0.92)';
-          }}
-          onTouchEnd={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
+            height: '52px',
+            minWidth: '88px',
+            padding: '0 14px',
+            gap: '7px',
+            borderRadius: '16px',
+            flexShrink: 0,
           }}
         >
-          <img
-            src={assetUrl('assets/cropped/tuido-icon.png')}
-            alt="Túi Đồ"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              display: 'block',
-              pointerEvents: 'none',
-            }}
-            onError={(e) => {
-              if (!e.currentTarget.src.includes('tuido-icon.png')) {
-                e.currentTarget.src = assetUrl('assets/tuido-icon.png');
-              }
-            }}
-          />
+          <FintechIcon name="portfolio" size={18} color="#38BDF8" />
+          <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#F1F5F9', whiteSpace: 'nowrap' }}>
+            Tài sản
+          </span>
         </button>
 
-        {/* Ở Giữa: Nút Lắc Xúc Xắc Nằm Sát Đáy Chân Thực, To Rõ Dễ Bấm */}
+        {/* Center: Primary Roll CTA */}
         <button
           onClick={onRollPress}
           disabled={isDisabled}
           title={isDisabled ? 'Đang thực hiện lượt...' : 'Chạm để Gieo Xúc Xắc'}
           aria-label="Lắc Xúc Xắc"
           style={{
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            cursor: isDisabled ? 'not-allowed' : 'pointer',
-            opacity: isDisabled ? 0.65 : 1,
-            outline: 'none',
-            transition: 'transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            filter: 'drop-shadow(0 10px 24px rgba(0, 0, 0, 0.6))',
-            animation: !isDisabled ? 'nutlacBreathe 2.4s infinite ease-in-out' : 'none',
+            flex: 1,
+            height: '56px',
+            borderRadius: '18px',
+            border: isDisabled ? '1px solid rgba(148, 163, 184, 0.2)' : '1px solid rgba(52, 211, 153, 0.65)',
+            background: isDisabled
+              ? 'rgba(30, 41, 59, 0.78)'
+              : 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+            color: '#FFFFFF',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '-4px',
-            minWidth: '48px',
-            minHeight: '48px',
-            width: 'clamp(128px, 34vw, 156px)',
-            height: 'clamp(68px, 18vw, 86px)',
-            boxSizing: 'border-box',
+            gap: '9px',
+            cursor: isDisabled ? 'not-allowed' : 'pointer',
+            opacity: isDisabled ? 0.6 : 1,
+            boxShadow: isDisabled
+              ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+              : '0 8px 24px rgba(16, 185, 129, 0.42), inset 0 1px 0 rgba(255,255,255,0.25)',
+            transition: 'transform 0.14s ease, opacity 0.15s ease',
           }}
-          onMouseDown={(e) => {
-            if (!isDisabled) e.currentTarget.style.transform = 'scale(0.92)';
+          onPointerDown={(e) => {
+            if (!isDisabled) e.currentTarget.style.transform = 'scale(0.96)';
           }}
-          onMouseUp={(e) => {
-            if (!isDisabled) e.currentTarget.style.transform = 'scale(1)';
-          }}
-          onTouchStart={(e) => {
-            if (!isDisabled) e.currentTarget.style.transform = 'scale(0.92)';
-          }}
-          onTouchEnd={(e) => {
+          onPointerUp={(e) => {
             if (!isDisabled) e.currentTarget.style.transform = 'scale(1)';
           }}
         >
-          <img
-            src={assetUrl('assets/cropped/nutlac-btn.webp')}
-            alt="Lắc Xúc Xắc"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              display: 'block',
-              pointerEvents: 'none',
-            }}
-            onError={(e) => {
-              if (!e.currentTarget.src.includes('nutlac-btn.png')) {
-                e.currentTarget.src = assetUrl('assets/cropped/nutlac-btn.png');
-              } else if (!e.currentTarget.src.includes('nutlac.PNG')) {
-                e.currentTarget.src = assetUrl('assets/nutlac.PNG');
-              }
-            }}
-          />
+          <FintechIcon name="dice" size={22} color="#FFFFFF" />
+          <span style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+            {isDisabled ? 'Đang xử lý...' : 'Gieo Xúc Xắc'}
+          </span>
         </button>
 
-        {/* Bên Phải: Nút Sổ Tay (Kiến Thức) (Icon Huy Hiệu Gỗ To Đẹp) */}
+        {/* Right: Luật chơi / Kiến thức */}
         <button
           onClick={onGuidePress}
-          title="Sổ Tay Chiến Lược (Kiến Thức)"
+          title="Sổ Tay Chiến Lược & Luật Chơi"
           aria-label="Sổ Tay"
-          className="medieval-icon-btn"
+          className="fintech-icon-btn"
           style={{
-            background: 'none',
-            border: 'none',
-            padding: '2px',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            outline: 'none',
-            marginBottom: '4px',
-            minWidth: '48px',
-            minHeight: '48px',
-            width: 'clamp(56px, 16vw, 68px)',
-            height: 'clamp(56px, 16vw, 68px)',
-            boxSizing: 'border-box',
-            filter: 'drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55))',
-            transition: 'transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = 'scale(0.92)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-          onTouchStart={(e) => {
-            e.currentTarget.style.transform = 'scale(0.92)';
-          }}
-          onTouchEnd={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
+            height: '52px',
+            minWidth: '88px',
+            padding: '0 14px',
+            gap: '7px',
+            borderRadius: '16px',
+            flexShrink: 0,
           }}
         >
-          <img
-            src={assetUrl('assets/cropped/sotay-full-icon.png')}
-            alt="Sổ Tay"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              display: 'block',
-              pointerEvents: 'none',
-            }}
-            onError={(e) => {
-              if (!e.currentTarget.src.includes('sotay.PNG')) {
-                e.currentTarget.src = assetUrl('assets/sotay.PNG');
-              }
-            }}
-          />
+          <FintechIcon name="guide" size={18} color="#FBBF24" />
+          <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#F1F5F9', whiteSpace: 'nowrap' }}>
+            Sổ tay
+          </span>
         </button>
       </div>
-
-      <style>{`
-        @keyframes nutlacBreathe {
-          0%, 100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.05);
-          }
-        }
-      `}</style>
     </div>
   );
 };
-

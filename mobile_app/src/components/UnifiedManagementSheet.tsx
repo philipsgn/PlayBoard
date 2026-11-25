@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { GameState } from '../../../src/game/types';
-import { ASSETS, RULES } from '../../../src/data/config';
+import { ASSETS } from '../../../src/data/config';
+import { getChapterPreset } from '../../../src/data/chapter-presets';
 import { totalWorth } from '../../../src/game/engine';
 import { liquidatableFunds, goalProgress } from '../../../src/game/selectors';
 import { hasBondCredit } from '../../../src/game/bond-credit';
@@ -11,9 +12,8 @@ import { investmentLotLabel, maturityLabel, savingsPeriodExplanation } from '../
 import { exportLog } from '../../../src/exportLog';
 import { localizeNarrative } from '../../../src/components/glossary';
 import { money } from '../../../src/game/format';
-import { Icon } from '../../../src/components/Icon';
 import { sound } from '../utils/audio';
-import { assetUrl } from '../utils/assets';
+import { FintechIcon, type FintechIconName } from './FintechIcon';
 
 interface UnifiedManagementSheetProps {
   game: GameState;
@@ -22,45 +22,13 @@ interface UnifiedManagementSheetProps {
   onHelp?: () => void;
 }
 
-interface MaskedIconProps {
-  src: string;
-  alt: string;
-  size?: number;
-  color: string;
-  style?: React.CSSProperties;
-}
-
-const MaskedIcon: React.FC<MaskedIconProps> = ({
-  src,
-  alt,
-  size = 18,
-  color,
-  style = {},
-}) => {
-  return (
-    <span
-      role="img"
-      aria-label={alt}
-      style={{
-        display: 'inline-block',
-        width: `${size}px`,
-        height: `${size}px`,
-        backgroundColor: color,
-        WebkitMaskImage: `url(${src})`,
-        WebkitMaskRepeat: 'no-repeat',
-        WebkitMaskPosition: 'center',
-        WebkitMaskSize: 'contain',
-        maskImage: `url(${src})`,
-        maskRepeat: 'no-repeat',
-        maskPosition: 'center',
-        maskSize: 'contain',
-        flexShrink: 0,
-        verticalAlign: 'middle',
-        transition: 'background-color 0.15s ease, transform 0.15s ease',
-        ...style,
-      }}
-    />
-  );
+const ASSET_ICON_MAP: Record<string, FintechIconName> = {
+  cash: 'cash',
+  savings: 'bank',
+  stocks: 'stocks',
+  bonds: 'bonds',
+  gold: 'gold',
+  business: 'business',
 };
 
 export const UnifiedManagementSheet: React.FC<UnifiedManagementSheetProps> = ({
@@ -76,12 +44,11 @@ export const UnifiedManagementSheet: React.FC<UnifiedManagementSheetProps> = ({
   const checkScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const hasMore = el.scrollHeight - el.scrollTop - el.clientHeight > 14;
-    setCanScrollDown(hasMore);
+    setCanScrollDown(el.scrollHeight - el.scrollTop - el.clientHeight > 14);
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(checkScroll, 100);
+    const timer = setTimeout(checkScroll, 80);
     return () => clearTimeout(timer);
   }, [activeTab, game, checkScroll]);
 
@@ -90,12 +57,13 @@ export const UnifiedManagementSheet: React.FC<UnifiedManagementSheetProps> = ({
     setActiveTab(tab);
   };
 
-  // Financial calculations
   const worth = totalWorth(game);
   const funds = liquidatableFunds(game);
   const goal = goalProgress(game);
   const progress = Math.min(100, Math.max(0, goal.percent));
   const activeDeposits = game.deposits.filter((lot) => lot.status === 'active');
+  const chapterPreset = getChapterPreset(game.chapterId ?? 1);
+  const baseCap = game.startingCapitalOverride ?? chapterPreset.baseStartingCapital;
 
   return (
     <div
@@ -106,12 +74,10 @@ export const UnifiedManagementSheet: React.FC<UnifiedManagementSheetProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(12, 10, 8, 0.72)',
+        background: 'rgba(2, 6, 23, 0.78)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
-        animation: 'fadeIn 0.2s ease',
-        writingMode: 'horizontal-tb',
-        textOrientation: 'mixed',
+        padding: '12px',
         pointerEvents: 'auto',
       }}
       onClick={(e) => {
@@ -121,430 +87,302 @@ export const UnifiedManagementSheet: React.FC<UnifiedManagementSheetProps> = ({
         }
       }}
     >
-      {/* Khung Sổ Quản Lý Bìa Giấy Da Cổ Điển (#F5EBE6 / #E3CCA9) — Chuẩn hóa kích thước ôm sát nội dung: min(94%, 440px) x min(88vh, 760px) */}
       <div
-        className="w-[94%] max-w-[440px] mx-auto relative overflow-hidden flex flex-col shadow-2xl bg-transparent"
         style={{
           position: 'relative',
-          width: 'min(94%, 440px)',
-          maxWidth: '440px',
-          height: 'min(88vh, 760px)',
-          maxHeight: '760px',
-          background: 'linear-gradient(175deg, #FDF8F3 0%, #F5EBE6 30%, #ECDCC2 75%, #E3CCA9 100%)',
-          border: '3.5px solid #8C5828',
-          outline: '2px solid #5C3513',
-          borderRadius: '28px',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), inset 0 0 25px rgba(184, 144, 91, 0.25)',
-          fontFamily: "'Fredoka', sans-serif",
-          boxSizing: 'border-box',
-          overflow: 'hidden',
+          width: 'min(94vw, 420px)',
+          height: 'min(86dvh, 720px)',
+          background: '#0F172A',
+          border: '1px solid rgba(148, 163, 184, 0.25)',
+          borderRadius: '22px',
+          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.75)',
+          fontFamily: 'var(--font-sans)',
           display: 'flex',
           flexDirection: 'column',
-          animation: 'sheetScaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          writingMode: 'horizontal-tb',
-          textOrientation: 'mixed',
-          pointerEvents: 'auto',
+          overflow: 'hidden',
+          color: '#F8FAFC',
         }}
       >
-        {/* Nút đóng góc trên bên phải bằng asset nút exit.png */}
-        <button
-          onClick={() => {
-            sound.playClick();
-            onClose();
-          }}
-          title="Đóng Bảng"
-          aria-label="Đóng"
-          style={{
-            position: 'absolute',
-            top: '12px',
-            right: '14px',
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            zIndex: 40,
-            transition: 'transform 0.15s ease',
-          }}
-          onPointerDown={(e) => {
-            (e.currentTarget as HTMLElement).style.transform = 'scale(0.88)';
-          }}
-          onPointerUp={(e) => {
-            (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-          }}
-        >
-          <img
-            src={assetUrl('assets/cropped/exit-btn.png')}
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = assetUrl('assets/nut-exit.png');
-            }}
-            alt="Đóng"
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          />
-        </button>
-
-        {/* VÙNG NỘI DUNG NẰM TRỌN TRONG PARCHMENT (Edge-to-Edge ôm sát, padding chuẩn 12px 14px 10px 14px) */}
+        {/* Header + Segmented Tabs */}
         <div
           style={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-            padding: '12px 14px 10px 14px',
             display: 'flex',
-            flexDirection: 'column',
-            boxSizing: 'border-box',
-            overflow: 'hidden',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '14px 16px 12px 16px',
+            borderBottom: '1px solid rgba(148, 163, 184, 0.16)',
+            gap: '10px',
+            flexShrink: 0,
           }}
         >
-          {/* Top Header: 2 Tab Chuyển Đổi Ví Tài Sản & Nhật Ký */}
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingBottom: '8px',
-              borderBottom: '1.5px solid rgba(140, 88, 40, 0.28)',
-              marginBottom: '6px',
-              flexShrink: 0,
-              gap: '10px',
-              width: '100%',
-              paddingRight: '36px', // Khoảng trống cho nút Exit
+              flex: 1,
+              background: '#1E293B',
+              borderRadius: '12px',
+              padding: '3px',
+              gap: '4px',
             }}
           >
-            {/* Tab: Ví Tài Sản */}
             <button
               onClick={() => switchTab('portfolio')}
               style={{
-                background: activeTab === 'portfolio' ? 'rgba(180, 83, 9, 0.16)' : 'transparent',
-                color: activeTab === 'portfolio' ? '#381F0B' : '#8C5828',
+                flex: 1,
+                height: '36px',
                 border: 'none',
-                borderRadius: '10px',
-                borderBottom: activeTab === 'portfolio' ? '3px solid #B45309' : '3px solid transparent',
-                padding: '4px 14px',
-                fontSize: '13.5px',
-                fontWeight: activeTab === 'portfolio' ? 700 : 500,
+                borderRadius: '9px',
+                background: activeTab === 'portfolio' ? '#10B981' : 'transparent',
+                color: activeTab === 'portfolio' ? '#FFFFFF' : '#94A3B8',
+                fontSize: '13px',
+                fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                justifyContent: 'center',
+                gap: '6px',
                 transition: 'all 0.15s ease',
-                fontFamily: "'Fredoka', sans-serif",
-                whiteSpace: 'nowrap',
               }}
             >
-              <MaskedIcon
-                src={assetUrl('assets/wallet.png')}
-                alt="Ví Tài Sản"
-                size={21}
-                color={activeTab === 'portfolio' ? '#381F0B' : '#8C5828'}
-              />
-              <span>Ví Tài Sản</span>
+              <FintechIcon name="portfolio" size={15} />
+              <span>Danh mục</span>
             </button>
-
-            {/* Tab: Nhật Ký */}
             <button
               onClick={() => switchTab('log')}
               style={{
-                background: activeTab === 'log' ? 'rgba(180, 83, 9, 0.16)' : 'transparent',
-                color: activeTab === 'log' ? '#381F0B' : '#8C5828',
+                flex: 1,
+                height: '36px',
                 border: 'none',
-                borderRadius: '10px',
-                borderBottom: activeTab === 'log' ? '3px solid #B45309' : '3px solid transparent',
-                padding: '4px 14px',
-                fontSize: '13.5px',
-                fontWeight: activeTab === 'log' ? 700 : 500,
+                borderRadius: '9px',
+                background: activeTab === 'log' ? '#10B981' : 'transparent',
+                color: activeTab === 'log' ? '#FFFFFF' : '#94A3B8',
+                fontSize: '13px',
+                fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                justifyContent: 'center',
+                gap: '6px',
                 transition: 'all 0.15s ease',
-                fontFamily: "'Fredoka', sans-serif",
-                whiteSpace: 'nowrap',
               }}
             >
-              <MaskedIcon
-                src={assetUrl('assets/history-icon.png')}
-                alt="Nhật Ký"
-                size={21}
-                color={activeTab === 'log' ? '#381F0B' : '#8C5828'}
-              />
-              <span>Nhật Ký</span>
+              <FintechIcon name="log" size={15} />
+              <span>Nhật ký</span>
             </button>
           </div>
 
+          <button
+            onClick={() => {
+              sound.playClick();
+              onClose();
+            }}
+            aria-label="Đóng"
+            className="fintech-icon-btn"
+            style={{ width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0 }}
+          >
+            <FintechIcon name="close" size={18} />
+          </button>
+        </div>
+
+        {/* Body Content */}
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            padding: '12px 16px 14px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}
+        >
           {activeTab === 'portfolio' ? (
             <>
-              {/* KHU VỰC CỐ ĐỊNH: TỔNG TÀI SẢN RÒNG & TIẾN ĐỘ 90M VND (Thẻ bo góc ôm sát) */}
+              {/* KPI Summary Card */}
               <div
                 style={{
-                  flexShrink: 0,
-                  background: 'rgba(255, 255, 255, 0.72)',
-                  border: '1.5px solid rgba(140, 88, 40, 0.22)',
-                  borderRadius: '14px',
-                  padding: '8px 12px',
-                  marginBottom: '6px',
+                  background: '#1E293B',
+                  border: '1px solid rgba(148, 163, 184, 0.18)',
+                  borderRadius: '16px',
+                  padding: '12px 14px',
+                  marginBottom: '10px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '4px',
-                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
+                  gap: '8px',
+                  flexShrink: 0,
                 }}
               >
-                {/* Net Worth */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'baseline',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '4px',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      letterSpacing: '0.04em',
-                      color: '#78350F',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    <FinancialTerm term="netWorth">TỔNG TÀI SẢN RÒNG</FinancialTerm>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <FinancialTerm term="netWorth">Tổng tài sản ròng</FinancialTerm>
                   </span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                    <strong style={{ fontSize: '19px', color: '#381F0B', fontWeight: 700, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
+                    <strong className="tabular-nums" style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF' }}>
                       {money(worth)}
                     </strong>
                     <small
+                      className="tabular-nums"
                       style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: worth >= RULES.startingCapital ? '#047857' : '#B91C1C',
-                        fontVariantNumeric: 'tabular-nums',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        color: worth >= baseCap ? '#34D399' : '#F87171',
                       }}
                     >
-                      {worth >= RULES.startingCapital ? '+' : ''}
-                      {money(worth - RULES.startingCapital)}
+                      {worth >= baseCap ? '+' : ''}
+                      {money(worth - baseCap)}
                     </small>
                   </div>
                 </div>
 
-                {/* Goal Track & Progress Bar */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '2px' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'baseline',
-                      fontSize: '11.5px',
-                      color: '#451A03',
-                    }}
-                  >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#CBD5E1' }}>
                     <span>
-                      Huy động về đích: <strong style={{ color: '#047857', fontVariantNumeric: 'tabular-nums' }}>{money(funds)}</strong> / <strong>90M</strong>
+                      Huy động hợp lệ: <strong className="tabular-nums" style={{ color: '#34D399' }}>{money(funds)}</strong> / <strong className="tabular-nums">{goal.target / 1_000_000}M</strong>
                     </span>
-                    <strong style={{ color: '#B45309', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{Math.round(progress)}%</strong>
+                    <strong className="tabular-nums" style={{ color: '#FBBF24' }}>{Math.round(progress)}%</strong>
                   </div>
 
-                  {/* Stylized Antique Progress Bar */}
                   <div
                     style={{
                       width: '100%',
-                      height: '8px',
-                      background: 'rgba(184, 144, 91, 0.25)',
-                      border: '1px solid rgba(140, 88, 40, 0.45)',
-                      borderRadius: '4px',
+                      height: '6px',
+                      background: 'rgba(15, 23, 42, 0.8)',
+                      borderRadius: '999px',
                       overflow: 'hidden',
-                      boxSizing: 'border-box',
                     }}
                     role="progressbar"
                     aria-valuenow={progress}
                     aria-valuemin={0}
                     aria-valuemax={100}
-                    aria-label="Tiến độ tích lũy 90 triệu"
                   >
                     <div
                       style={{
                         width: `${progress}%`,
                         height: '100%',
-                        background: 'linear-gradient(90deg, #10B981 0%, #F59E0B 70%, #D97706 100%)',
+                        background: funds >= goal.target
+                          ? 'linear-gradient(90deg, #10B981, #34D399)'
+                          : 'linear-gradient(90deg, #F59E0B, #FBBF24)',
                         transition: 'width 0.35s ease',
                       }}
                     />
                   </div>
 
-                  <details style={{ marginTop: '2px', fontSize: '11px', color: '#78350F' }}>
-                    <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Công thức tính mục tiêu 90M</summary>
-                    <div style={{ marginTop: '3px', paddingLeft: '4px' }}>
+                  <details style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '2px' }}>
+                    <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Chi tiết công thức huy động hợp lệ</summary>
+                    <div style={{ marginTop: '6px', padding: '8px', background: '#0F172A', borderRadius: '10px', color: '#E2E8F0' }}>
                       <GoalChecks game={game} />
                     </div>
                   </details>
                 </div>
               </div>
 
-              {/* KHU VỰC CUỘN NỘI DUNG (LƯỚI THẺ TÀI SẢN GỌN GÀNG, KHÔNG KHOẢNG TRỐNG THỪA) */}
-              <div
-                style={{
-                  position: 'relative',
-                  flex: 1,
-                  minHeight: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'hidden',
-                }}
-              >
+              {/* Asset List */}
+              <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <div
                   ref={scrollRef}
                   onScroll={checkScroll}
-                  className="medieval-scrollbar"
                   style={{
                     flex: 1,
                     minHeight: 0,
                     overflowY: 'auto',
                     WebkitOverflowScrolling: 'touch',
-                    overscrollBehavior: 'contain',
-                    paddingRight: '3px',
-                    paddingBottom: '12px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '5px',
-                    fontFamily: "'Fredoka', sans-serif",
-                    color: '#381F0B',
+                    gap: '6px',
+                    paddingRight: '2px',
+                    paddingBottom: '12px',
                   }}
                 >
-                  {/* DANH SÁCH 6 THẺ TÀI SẢN GỌN GÀNG (COMPACT ASSET CARDS) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {Object.entries(ASSETS).map(([key, asset]) => {
-                      const amount = game.portfolio[key as keyof typeof ASSETS];
-                      const locked =
-                        key !== 'cash' &&
-                        key !== 'savings' &&
-                        amount === 0 &&
-                        !game.unlockedAssets.includes(key as 'stocks' | 'bonds' | 'gold' | 'business');
-                      return (
-                        <div
-                          key={key}
+                  {Object.entries(ASSETS).map(([key, asset]) => {
+                    const amount = game.portfolio[key as keyof typeof ASSETS];
+                    const locked =
+                      key !== 'cash' &&
+                      key !== 'savings' &&
+                      amount === 0 &&
+                      !game.unlockedAssets.includes(key as 'stocks' | 'bonds' | 'gold' | 'business');
+                    const iconName = ASSET_ICON_MAP[key] ?? 'wallet';
+
+                    return (
+                      <div
+                        key={key}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 12px',
+                          background: locked ? 'rgba(30, 41, 59, 0.45)' : '#1E293B',
+                          border: '1px solid rgba(148, 163, 184, 0.14)',
+                          borderRadius: '12px',
+                          opacity: locked ? 0.6 : 1,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                          <span
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              borderRadius: '10px',
+                              background: 'rgba(16, 185, 129, 0.12)',
+                              color: locked ? '#64748B' : '#34D399',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <FintechIcon name={iconName} size={17} />
+                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                            <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#F8FAFC' }}>
+                              {asset.label}
+                            </span>
+                            {key === 'cash' && (
+                              <small style={{ fontSize: '11px', color: '#34D399' }}>Thanh khoản tức thời</small>
+                            )}
+                            {key === 'savings' && (
+                              <small style={{ fontSize: '11px', color: '#94A3B8' }}>
+                                {activeDeposits.length} khoản đang gửi
+                              </small>
+                            )}
+                            {key === 'business' && amount > 0 && (
+                              <small style={{ fontSize: '11px', color: '#FBBF24' }}>Chỉ bán tại ô Kinh doanh</small>
+                            )}
+                            {locked && (
+                              <small style={{ fontSize: '11px', color: '#64748B' }}>Chờ dừng tại ô để mở khóa</small>
+                            )}
+                          </div>
+                        </div>
+
+                        <strong
+                          className="tabular-nums"
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '6px 10px',
-                            background: locked ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.85)',
-                            border: '1px solid rgba(140, 88, 40, 0.16)',
-                            borderRadius: '10px',
-                            fontSize: '12.5px',
-                            opacity: locked ? 0.65 : 1,
-                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+                            fontSize: '13.5px',
+                            fontWeight: 700,
+                            color: locked ? '#64748B' : '#FFFFFF',
+                            whiteSpace: 'nowrap',
+                            marginLeft: '8px',
                           }}
                         >
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              minWidth: 0,
-                              flex: 1,
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '32px',
-                                height: '32px',
-                                background: 'rgba(180, 83, 9, 0.1)',
-                                borderRadius: '8px',
-                                color: '#78350F',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {key === 'stocks' ? (
-                                <img src={assetUrl('assets/stock-icon.png')} alt="Cổ phiếu" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
-                              ) : key === 'bonds' ? (
-                                <img src={assetUrl('assets/bond-icon.png')} alt="Trái phiếu" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
-                              ) : key === 'gold' ? (
-                                <img src={assetUrl('assets/gold-icon.png')} alt="Vàng" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
-                              ) : key === 'cash' ? (
-                                <img src={assetUrl('assets/money-icon.png')} alt="Tiền mặt" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
-                              ) : (
-                                <Icon name={asset.icon} size={21} />
-                              )}
-                            </span>
-                            <div
-                              style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                minWidth: 0,
-                                overflow: 'hidden',
-                              }}
-                            >
-                              <span
-                                style={{
-                                  fontWeight: 600,
-                                  color: '#381F0B',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  fontSize: '13px',
-                                }}
-                              >
-                                {asset.label}
-                              </span>
-                              {key === 'cash' && (
-                                <small style={{ fontSize: '10.5px', color: '#047857', fontWeight: 500 }}>Tiền mặt sẵn sàng dùng ngay</small>
-                              )}
-                              {key === 'savings' && (
-                                <small style={{ fontSize: '10.5px', color: '#6D4C41' }}>
-                                  {activeDeposits.length} khoản tiền gửi chưa đáo hạn
-                                </small>
-                              )}
-                              {key === 'business' && amount > 0 && (
-                                <small style={{ fontSize: '10.5px', color: '#B45309' }}>Quán kinh doanh (Chỉ bán tại ô Shop)</small>
-                              )}
-                              {locked && (
-                                <small style={{ fontSize: '10.5px', color: '#8D6E63' }}>Chờ cơ hội giao dịch trên bàn cờ</small>
-                              )}
-                            </div>
-                          </div>
-                          <strong
-                            style={{
-                              fontSize: '13.5px',
-                              color: locked ? '#8D6E63' : '#381F0B',
-                              fontVariantNumeric: 'tabular-nums',
-                              whiteSpace: 'nowrap',
-                              flexShrink: 0,
-                              marginLeft: '8px',
-                              fontWeight: 700,
-                            }}
-                          >
-                            {locked ? '—' : money(amount)}
-                          </strong>
-                        </div>
-                      );
-                    })}
-                  </div>
+                          {locked ? '—' : money(amount)}
+                        </strong>
+                      </div>
+                    );
+                  })}
 
-                  {/* KHOẢN TIẾT KIỆM ĐANG GỬI */}
+                  {/* Active Deposits */}
                   {activeDeposits.length > 0 && (
                     <div
                       style={{
-                        padding: '6px 10px',
-                        background: 'rgba(255, 255, 255, 0.75)',
-                        borderRadius: '10px',
-                        border: '1px solid rgba(140, 88, 40, 0.2)',
-                        marginTop: '4px',
+                        padding: '10px 12px',
+                        background: '#1E293B',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(56, 189, 248, 0.22)',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '4px',
+                        gap: '6px',
                       }}
                     >
-                      <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#78350F', textTransform: 'uppercase' }}>
-                        Khoản gửi tiết kiệm đang hoạt động:
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase' }}>
+                        Sổ tiết kiệm đang hoạt động
                       </span>
                       {activeDeposits.map((lot) => (
                         <div
@@ -553,103 +391,85 @@ export const UnifiedManagementSheet: React.FC<UnifiedManagementSheetProps> = ({
                             fontSize: '12px',
                             display: 'flex',
                             justifyContent: 'space-between',
-                            padding: '3px 0',
-                            borderBottom: '1px dashed rgba(140, 88, 40, 0.15)',
+                            padding: '4px 0',
+                            borderBottom: '1px dashed rgba(148, 163, 184, 0.16)',
                             gap: '6px',
                           }}
                         >
-                          <span style={{ fontWeight: 500, color: '#451A03' }}>{investmentLotLabel('savings', lot.id)}:</span>
-                          <strong style={{ marginLeft: 'auto', textAlign: 'right', color: '#047857', fontVariantNumeric: 'tabular-nums' }}>
-                            {money(lot.principal)} (lãi {Math.round(lot.rate * 100)}%, {maturityLabel(lot.maturityLap)})
+                          <span style={{ color: '#CBD5E1' }}>{investmentLotLabel('savings', lot.id)}</span>
+                          <strong className="tabular-nums" style={{ color: '#34D399', textAlign: 'right' }}>
+                            {money(lot.principal)} ({Math.round(lot.rate * 100)}%, {maturityLabel(lot.maturityLap)})
                           </strong>
                         </div>
                       ))}
-                      <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#78350F', fontStyle: 'italic' }}>
-                        {savingsPeriodExplanation}
-                      </p>
+                      <p style={{ fontSize: '11px', color: '#94A3B8', lineHeight: 1.4 }}>{savingsPeriodExplanation}</p>
                     </div>
                   )}
 
-                  {/* TRÁI PHIẾU THEO TỔ CHỨC PHÁT HÀNH */}
+                  {/* Bonds */}
                   {hasBondCredit(game) && game.bondLots.length > 0 && (
                     <details
                       style={{
                         fontSize: '12px',
-                        color: '#451A03',
-                        background: 'rgba(255, 255, 255, 0.7)',
-                        border: '1px solid rgba(140, 88, 40, 0.2)',
-                        borderRadius: '10px',
-                        padding: '6px 10px',
-                        marginTop: '4px',
+                        color: '#E2E8F0',
+                        background: '#1E293B',
+                        border: '1px solid rgba(148, 163, 184, 0.18)',
+                        borderRadius: '12px',
+                        padding: '10px 12px',
                       }}
                     >
-                      <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#78350F' }}>
-                        Chi tiết lô trái phiếu nắm giữ ({game.bondLots.length} lô)
+                      <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#FBBF24' }}>
+                        Chi tiết lô trái phiếu ({game.bondLots.length} lô)
                       </summary>
-                      <div style={{ marginTop: '4px' }}>
+                      <div style={{ marginTop: '6px' }}>
                         <BondHoldings game={game} />
                       </div>
                     </details>
                   )}
 
-                  {/* NỢ VAY CỦA BẠN (NẾU CÓ) */}
+                  {/* Debt Warning */}
                   {game.portfolio.debt > 0 && (
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '6px 10px',
-                        background: 'rgba(254, 226, 226, 0.9)',
-                        border: '1.5px solid rgba(239, 68, 68, 0.45)',
-                        borderRadius: '10px',
-                        marginTop: '4px',
-                        boxShadow: '0 1px 3px rgba(239, 68, 68, 0.1)',
+                        padding: '10px 12px',
+                        background: 'rgba(239, 68, 68, 0.14)',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        borderRadius: '12px',
                       }}
                     >
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#991B1B' }}>Nợ vay khẩn cấp</span>
-                        <small style={{ fontSize: '11px', color: '#B91C1C' }}>Lãi suất 10%/vòng tại ô Xuất phát</small>
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#FCA5A5' }}>Nợ vay hiện tại</span>
+                        <small style={{ fontSize: '11px', color: '#F87171' }}>Lãi suất 10%/vòng tại ô Xuất phát</small>
                       </div>
-                      <strong style={{ fontSize: '14px', color: '#991B1B', fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>
+                      <strong className="tabular-nums" style={{ fontSize: '14px', fontWeight: 800, color: '#FCA5A5' }}>
                         -{money(game.portfolio.debt)}
                       </strong>
                     </div>
                   )}
 
-                  {/* HƯỚNG DẪN CHIẾN LƯỢC / TRỢ GIÚP */}
                   {onHelp && (
-                    <div style={{ marginTop: '8px', textAlign: 'center' }}>
-                      <button
-                        onClick={() => {
-                          sound.playClick();
-                          onHelp();
-                        }}
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.65)',
-                          border: '1.5px dashed rgba(140, 88, 40, 0.45)',
-                          borderRadius: '8px',
-                          padding: '6px 14px',
-                          fontSize: '12px',
-                          color: '#78350F',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                          fontFamily: "'Fredoka', sans-serif",
-                          transition: 'all 0.15s ease',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                        }}
-                      >
-                        <MaskedIcon
-                          src={assetUrl('assets/read-icon.png')}
-                          alt="Sổ Tay"
-                          size={20}
-                          color="#78350F"
-                        />
-                        <span>Xem Sổ Tay Chiến Lược & Luật Chơi</span>
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => {
+                        sound.playClick();
+                        onHelp();
+                      }}
+                      className="fintech-icon-btn"
+                      style={{
+                        width: '100%',
+                        height: '42px',
+                        marginTop: '4px',
+                        gap: '8px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: '#FBBF24',
+                      }}
+                    >
+                      <FintechIcon name="guide" size={16} />
+                      <span>Mở Sổ Tay Chiến Lược & Luật Chơi</span>
+                    </button>
                   )}
                 </div>
 
@@ -662,232 +482,105 @@ export const UnifiedManagementSheet: React.FC<UnifiedManagementSheetProps> = ({
                       right: 0,
                       height: '24px',
                       pointerEvents: 'none',
-                      background: 'linear-gradient(to top, rgba(246, 226, 189, 0.95) 0%, rgba(246, 226, 189, 0) 100%)',
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      justifyContent: 'center',
-                      paddingBottom: '2px',
-                      transition: 'opacity 0.2s ease',
+                      background: 'linear-gradient(to top, rgba(15, 23, 42, 0.96) 0%, rgba(15, 23, 42, 0) 100%)',
                     }}
-                  >
-                    <span
-                      style={{
-                        fontSize: '9.5px',
-                        color: '#b45309',
-                        fontWeight: 900,
-                        animation: 'bounceHint 1.4s infinite ease-in-out',
-                        opacity: 0.8,
-                      }}
-                    >
-                      ▼ Cuộn xem thêm
-                    </span>
-                  </div>
+                  />
                 )}
               </div>
             </>
           ) : (
-            /* TAB 1: NHẬT KÝ VÁN CHƠI (FLAT LOG ENTRIES) */
-            <div
-              style={{
-                position: 'relative',
-                flex: 1,
-                minHeight: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Header của Tab Nhật Ký: Số sự kiện & Nút xuất file */}
+            /* TAB 2: NHẬT KÝ */
+            <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  paddingBottom: '4px',
-                  marginBottom: '4px',
-                  borderBottom: '1px solid rgba(184, 144, 91, 0.3)',
+                  paddingBottom: '8px',
+                  marginBottom: '8px',
+                  borderBottom: '1px solid rgba(148, 163, 184, 0.16)',
                   flexShrink: 0,
                 }}
               >
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#78350f' }}>
-                  Đã ghi nhận: <strong>{game.log.length}</strong> biến cố
+                <span style={{ fontSize: '12px', fontWeight: 600, color: '#94A3B8' }}>
+                  Đã ghi nhận: <strong style={{ color: '#F8FAFC' }}>{game.log.length}</strong> sự kiện
                 </span>
                 <button
                   onClick={() => {
                     sound.playClick();
                     exportLog(game);
                   }}
-                  title="Tải lịch sử ván chơi về máy để phân tích"
-                  style={{
-                    background: 'rgba(180, 83, 9, 0.1)',
-                    border: '1px solid rgba(180, 83, 9, 0.35)',
-                    borderRadius: '4px',
-                    padding: '3px 9px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    color: '#78350f',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                  }}
+                  className="fintech-icon-btn"
+                  style={{ height: '32px', padding: '0 10px', fontSize: '12px', fontWeight: 700, gap: '6px', borderRadius: '8px' }}
                 >
-                  <img
-                    src={assetUrl('assets/export-globe.png')}
-                    alt="Xuất Nhật Ký"
-                    style={{
-                      width: '18px',
-                      height: '18px',
-                      objectFit: 'contain',
-                      flexShrink: 0,
-                      verticalAlign: 'middle',
-                      filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.15))',
-                    }}
-                  />
-                  <span>Xuất Nhật Ký</span>
+                  <FintechIcon name="bonds" size={14} color="#38BDF8" />
+                  <span>Xuất JSON</span>
                 </button>
               </div>
 
-              {/* Danh sách nhật ký cuộn phẳng (Flat Log List) */}
               <div
                 ref={scrollRef}
                 onScroll={checkScroll}
-                className="medieval-scrollbar"
                 style={{
                   flex: 1,
                   minHeight: 0,
                   overflowY: 'auto',
                   WebkitOverflowScrolling: 'touch',
-                  overscrollBehavior: 'contain',
-                  paddingRight: '4px',
-                  paddingBottom: '24px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '4px',
-                  fontFamily: "'Fredoka', sans-serif",
+                  gap: '6px',
+                  paddingBottom: '16px',
                 }}
               >
                 {game.log.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '24px 0', color: '#8c5828', fontSize: '12px' }}>
-                    Chưa có sự kiện nào. Hãy gieo xúc xắc để bắt đầu hành trình!
+                  <div style={{ textAlign: 'center', padding: '32px 0', color: '#64748B', fontSize: '13px' }}>
+                    Chưa có giao dịch nào. Hãy gieo xúc xắc để bắt đầu!
                   </div>
                 ) : (
                   game.log.toReversed().map((entry) => (
                     <details
                       key={entry.sequence}
                       style={{
-                        background: 'transparent',
-                        border: 'none',
-                        borderBottom: '1px dashed rgba(184, 144, 91, 0.3)',
-                        borderRadius: 0,
-                        padding: '4px 0',
-                        color: '#2b1103',
-                        boxShadow: 'none',
+                        background: '#1E293B',
+                        border: '1px solid rgba(148, 163, 184, 0.14)',
+                        borderRadius: '10px',
+                        padding: '8px 10px',
                       }}
                     >
                       <summary
                         style={{
                           cursor: 'pointer',
                           fontWeight: 700,
-                          fontSize: '12px',
-                          color: '#78350f',
+                          fontSize: '12.5px',
+                          color: '#F8FAFC',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
+                          gap: '8px',
                         }}
                       >
-                        <span style={{ fontFamily: "'Fredoka', sans-serif", whiteSpace: 'nowrap' }}>
-                          #{entry.sequence} · Vòng {entry.before.lap}
+                        <span className="tabular-nums" style={{ color: '#38BDF8', fontSize: '11.5px', flexShrink: 0 }}>
+                          #{entry.sequence} · V{entry.before.lap}
                         </span>
-                        <strong
-                          style={{
-                            marginLeft: '6px',
-                            color: '#2b1103',
-                            fontFamily: "'Fredoka', sans-serif",
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            maxWidth: '65%',
-                          }}
-                        >
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: 'right' }}>
                           {localizeNarrative(entry.title)}
-                        </strong>
+                        </span>
                       </summary>
-                      <div
-                        style={{
-                          marginTop: '3px',
-                          fontSize: '11.5px',
-                          lineHeight: 1.45,
-                          color: '#3e2723',
-                          paddingLeft: '6px',
-                          wordBreak: 'break-word',
-                          overflowWrap: 'break-word',
-                        }}
-                      >
-                        <p style={{ margin: '2px 0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                          <b>Quyết định:</b> {localizeNarrative(entry.decision)}
-                        </p>
-                        <p style={{ margin: '2px 0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                          <b>Hệ quả:</b> {localizeNarrative(entry.consequence)}
-                        </p>
-                        <p style={{ margin: '2px 0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                          <b>Tài sản ròng:</b> {money(totalWorth(entry.before))} → {money(totalWorth(entry.after))}
+                      <div style={{ marginTop: '6px', fontSize: '12px', lineHeight: 1.45, color: '#CBD5E1', paddingTop: '6px', borderTop: '1px dashed rgba(148, 163, 184, 0.16)' }}>
+                        <p style={{ margin: '2px 0' }}><strong style={{ color: '#F8FAFC' }}>Quyết định:</strong> {localizeNarrative(entry.decision)}</p>
+                        <p style={{ margin: '2px 0' }}><strong style={{ color: '#F8FAFC' }}>Hệ quả:</strong> {localizeNarrative(entry.consequence)}</p>
+                        <p className="tabular-nums" style={{ margin: '2px 0' }}>
+                          <strong style={{ color: '#F8FAFC' }}>Tài sản ròng:</strong> {money(totalWorth(entry.before))} → {money(totalWorth(entry.after))}
                         </p>
                       </div>
                     </details>
                   ))
                 )}
               </div>
-
-              {canScrollDown && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: '24px',
-                    pointerEvents: 'none',
-                    background: 'linear-gradient(to top, rgba(246, 226, 189, 0.95) 0%, rgba(246, 226, 189, 0) 100%)',
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    justifyContent: 'center',
-                    paddingBottom: '2px',
-                    transition: 'opacity 0.2s ease',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '9.5px',
-                      color: '#b45309',
-                      fontWeight: 900,
-                      animation: 'bounceHint 1.4s infinite ease-in-out',
-                      opacity: 0.8,
-                    }}
-                  >
-                    ▼ Cuộn xem thêm
-                  </span>
-                </div>
-              )}
             </div>
           )}
         </div>
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes sheetScaleUp {
-          from { transform: scale(0.92); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        @keyframes bounceHint {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(2.5px); }
-        }
-      `}</style>
     </div>
   );
 };
