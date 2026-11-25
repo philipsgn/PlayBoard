@@ -70,6 +70,8 @@ jobs:
       - name: Setup Pages (Actions-based fallback)
         id: pages_setup
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
         continue-on-error: true
 
       - name: Upload Pages Artifact
