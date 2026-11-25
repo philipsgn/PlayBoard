@@ -8,7 +8,6 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import type { Stage3DProps } from './types.ts';
 import { extractVisualMetaphors } from './bindings/stateBindings.ts';
-import { CoinStackProp } from './props/CoinStackProp.ts';
 import { DebtChainProp } from './props/DebtChainProp.ts';
 import { GoalFlagProp } from './props/GoalFlagProp.ts';
 import { LightingRig } from './fx/LightingRig.ts';
@@ -57,15 +56,12 @@ export const ChapterStage: React.FC<Stage3DProps> = ({
     const lightingRig = new LightingRig();
     scene.add(lightingRig.group);
 
-    // 5. Khởi tạo 3 Props Ẩn Dụ Cốt Lõi
-    const coinStack = new CoinStackProp();
-    scene.add(coinStack.group);
-
+    // 5. Khởi tạo Props Ẩn Dụ Cốt Lõi (Đã gỡ bỏ Chồng xu che ô bàn cờ)
     const debtChain = new DebtChainProp();
     scene.add(debtChain.group);
 
     const goalFlag = new GoalFlagProp();
-    // Đặt lá cờ 90M ở đường chân trời phía trên của bàn cờ
+    // Đặt lá cờ đích ở đường chân trời phía trên của bàn cờ
     goalFlag.setPosition(0, 2.2, -1.8);
     scene.add(goalFlag.group);
 
@@ -117,9 +113,6 @@ export const ChapterStage: React.FC<Stage3DProps> = ({
       // Tọa độ 3D của vị trí quân cờ hiện tại
       const pawn3D = project2Dto3D(current.pawnCoord.x, current.pawnCoord.y);
 
-      // Cập nhật Chồng xu (lệch sang bên phải quân cờ)
-      coinStack.update(metaphors.coinCount, pawn3D.x + 0.32, pawn3D.y, pawn3D.z + 0.1);
-
       // Cập nhật Dây xích nợ (lệch sang bên trái quân cờ)
       debtChain.update(
         metaphors.debtChainLinks,
@@ -150,7 +143,6 @@ export const ChapterStage: React.FC<Stage3DProps> = ({
     // 9. Dọn dẹp WebGL Context khi unmount
     return () => {
       cancelAnimationFrame(animId);
-      coinStack.dispose();
       debtChain.dispose();
       goalFlag.dispose();
       lightingRig.dispose();
